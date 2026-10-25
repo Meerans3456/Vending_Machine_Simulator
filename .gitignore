@@ -1,0 +1,16 @@
+﻿/vending.exe
+/t_input.exe
+/t_math.exe
+/t_output.exe
+/t_utils.exe
+/tools/JWasm/
+/docs/
+
+*.obj
+*.o
+*.map
+*.lst
+*.tmp
+*.bak
+
+/*.exe
