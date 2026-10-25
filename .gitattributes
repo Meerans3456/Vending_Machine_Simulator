@@ -1,0 +1,2 @@
+# build.bat must keep Windows (CRLF) line endings for every team member
+*.bat text eol=crlf

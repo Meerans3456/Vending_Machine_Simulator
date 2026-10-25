@@ -1,15 +1,17 @@
-﻿/vending.exe
+# Built programs: rebuild with build.bat after cloning or pulling
+/vending.exe
 /t_input.exe
 /t_math.exe
 /t_output.exe
-/t_utils.exe
+/*.exe
+
+# Documents kept outside the repository (report and flowcharts)
 /docs/
 
+# Assembler and editor leftovers
 *.obj
 *.o
 *.map
 *.lst
 *.tmp
 *.bak
-
-/*.exe
