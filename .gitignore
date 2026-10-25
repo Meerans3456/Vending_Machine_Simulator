@@ -3,7 +3,6 @@
 /t_math.exe
 /t_output.exe
 /t_utils.exe
-/tools/JWasm/
 /docs/
 
 *.obj
