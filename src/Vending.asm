@@ -6,7 +6,8 @@
 ; Module files (pasted in at assembly time by 'include'):
 ;   data.inc    tables, messages, variables      (must come first)
 ;   utils.inc   print_str, newline, print_char, print_int, clear_screen, wait_key
-;   input.inc   read_int, read_product, lookup_price, lookup_name, read_payment
+;   lookup.inc  code_to_offset, lookup_price, lookup_name
+;   input.inc   read_int, read_product, read_payment
 ;   menu.inc    display_menu
 ;   math.inc    calc_change, break_change
 ;   output.inc  print_change, print_receipt
@@ -16,6 +17,7 @@
 
 include data.inc
 include utils.inc
+include lookup.inc
 include input.inc
 include menu.inc
 include math.inc
@@ -57,8 +59,8 @@ pay_loop:
     call read_payment      ; AX = money inserted now; 0 = cancel
     cmp ax, 0
     je main_cancel
-    ; The total is below the price (<= 35) before every insertion, and each
-    ; insertion is <= 999, so this addition can never overflow 16 bits.
+    ; The total is below the price before every insertion, and each insertion
+    ; is at most MAX_INPUT, so this addition can never overflow 16 bits.
     add word ptr payment, ax
 
     mov ax, word ptr payment
@@ -66,7 +68,7 @@ pay_loop:
     call calc_change       ; CF=0: AX = change; CF=1: AX = shortfall
     jc main_short
 
-    mov change, ax         ; save BEFORE break_change (it destroys AX)
+    mov change, ax         ; print_receipt reads this variable
     call break_change
     call print_receipt
     call wait_key          ; let the user read the receipt

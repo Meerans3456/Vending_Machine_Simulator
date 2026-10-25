@@ -5,9 +5,46 @@
 
 .code
 
-; display_menu: prints the product menu. Clobbers: AX, DX
+; display_menu: prints the menu. Each product line ("1. Chips - 15") is
+; built from product_names and product_prices, so the tables are the only
+; place where product data is stored.
+; Saves and restores every register it uses.
 display_menu proc
-    mov dx, offset msg_menu
+    push ax
+    push bx
+    push cx
+    push dx
+    push si
+
+    mov dx, offset msg_menu_top
     call print_str
+
+    xor si, si              ; SI = byte offset into the word tables
+    mov bx, 1               ; BX = product code shown to the user
+    mov cx, NUM_PRODUCTS
+dm_loop:
+    mov ax, bx
+    call print_int          ; code
+    mov dx, offset msg_dot
+    call print_str          ; ". "
+    mov dx, word ptr [product_names + si]
+    call print_str          ; name
+    mov dx, offset msg_dash
+    call print_str          ; " - "
+    mov ax, word ptr [product_prices + si]
+    call print_int          ; price
+    call newline
+    add si, 2
+    inc bx
+    loop dm_loop
+
+    mov dx, offset msg_menu_exit
+    call print_str
+
+    pop si
+    pop dx
+    pop cx
+    pop bx
+    pop ax
     ret
 display_menu endp

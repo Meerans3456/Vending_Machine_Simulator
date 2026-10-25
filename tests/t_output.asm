@@ -11,7 +11,6 @@ include data.inc
 
 ; --- test-only data ---
 .data
-t_ncases        equ 5
 t_hdr           db '--- print_change with hardcoded counts ---$'
 t_hdr2          db '--- print_receipt ---$'
 ; each case = 6 words: change, count50, count25, count10, count5, count1
@@ -20,9 +19,11 @@ t_cases         dw 35,  0, 1, 1, 0, 0
                 dw 99,  1, 1, 2, 0, 4
                 dw 964, 19, 0, 1, 0, 4
                 dw 1,   0, 0, 0, 0, 1
+t_casesize      equ 6 * 2               ; bytes per case (6 words)
+t_ncases        equ ($ - t_cases) / t_casesize
 
 include utils.inc
-include input.inc
+include lookup.inc
 include output.inc
 
 .code
@@ -54,7 +55,7 @@ tp_copy:
     pop si
     pop cx
     call print_change
-    add si, 12                      ; next case (6 words)
+    add si, t_casesize              ; next case
     loop tp_loop
 
     ; --- print_receipt tests (variables set by hand) ---

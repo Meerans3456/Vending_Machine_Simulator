@@ -1,5 +1,5 @@
 ; ============================================================
-; t_input.asm - standalone test: input.inc (read_int, read_product, lookup_price, read_payment)
+; t_input.asm - standalone test: input.inc (read_int, read_product, read_payment)
 ; Build  : build t_input
 ; ============================================================
 .model small
@@ -10,17 +10,13 @@ include data.inc
 ; --- test-only data ---
 .data
 t_hdra          db '--- read_int test: type numbers, 0 quits ---$'
-t_hdrb          db '--- lookup_price test ---$'
-t_hdrc          db '--- read_product test ---$'
-t_hdrd          db '--- read_payment test ---$'
+t_hdrb          db '--- read_product test ---$'
+t_hdrc          db '--- read_payment test ---$'
 t_ri            db 'read_int> $'
 t_ok            db 'OK, AX = $'
 t_cf            db 'CF=1 (invalid)$'
-t_nf            db 'not found$'
 t_rp            db 'read_product returned AL = $'
 t_rpay          db 'read_payment returned AX = $'
-t_codes         db 0, 1, 3, 6, 7, 9
-t_hdre          db '--- lookup_name test ---$'
 
 include utils.inc
 include input.inc
@@ -56,38 +52,9 @@ ta_bad:
     jmp ta_loop
 ta_done:
 
-    ; --- B: lookup_price on codes in t_codes ---
+    ; --- B: read_product ---
     call newline
     mov dx, offset t_hdrb
-    call print_str
-    call newline
-    mov si, offset t_codes
-    mov cx, 6
-tb_loop:
-    mov al, byte ptr [si]
-    xor ah, ah
-    call print_int          ; print the code
-    mov dl, ':'
-    call print_char
-    mov dl, ' '
-    call print_char
-    mov al, byte ptr [si]   ; reload (print_char clobbers AX)
-    call lookup_price
-    jc tb_fail
-    call print_int          ; print the price
-    call newline
-    jmp tb_next
-tb_fail:
-    mov dx, offset t_nf
-    call print_str
-    call newline
-tb_next:
-    inc si
-    loop tb_loop
-
-    ; --- C: read_product ---
-    call newline
-    mov dx, offset t_hdrc
     call print_str
     call newline
     call read_product
@@ -99,9 +66,9 @@ tb_next:
     call print_int
     call newline
 
-    ; --- D: read_payment ---
+    ; --- C: read_payment ---
     call newline
-    mov dx, offset t_hdrd
+    mov dx, offset t_hdrc
     call print_str
     call newline
     call read_payment
@@ -111,35 +78,6 @@ tb_next:
     pop ax
     call print_int
     call newline
-
-    ; --- E: lookup_name on codes in t_codes ---
-    call newline
-    mov dx, offset t_hdre
-    call print_str
-    call newline
-    mov si, offset t_codes
-    mov cx, 6
-te_loop:
-    mov al, byte ptr [si]
-    xor ah, ah
-    call print_int          ; print the code
-    mov dl, ':'
-    call print_char
-    mov dl, ' '
-    call print_char
-    mov al, byte ptr [si]   ; reload (print_char clobbers AX)
-    call lookup_name
-    jc te_fail
-    call print_str          ; DX = product name
-    call newline
-    jmp te_next
-te_fail:
-    mov dx, offset t_nf
-    call print_str
-    call newline
-te_next:
-    inc si
-    loop te_loop
 
     mov ah, 4Ch
     int 21h

@@ -18,9 +18,9 @@ newline proc
     push ax
     push dx
     mov ah, 02h
-    mov dl, 0Dh
+    mov dl, CR
     int 21h
-    mov dl, 0Ah
+    mov dl, LF
     int 21h
     pop dx
     pop ax
@@ -84,9 +84,9 @@ clear_screen proc
     push cx
     push dx
     mov ax, 0600h           ; AH=06h scroll up, AL=0 -> clear whole window
-    mov bh, 07h             ; attribute for blank lines: light grey on black
+    mov bh, TEXT_ATTR             ; attribute for blank lines: light grey on black
     xor cx, cx              ; top-left corner: row 0, col 0
-    mov dx, 184Fh           ; bottom-right corner: row 24, col 79
+    mov dx, SCREEN_END           ; bottom-right corner: row 24, col 79
     int 10h
     mov ah, 02h             ; set cursor position
     xor bh, bh              ; page 0

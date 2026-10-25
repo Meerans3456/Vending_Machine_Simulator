@@ -15,7 +15,10 @@ t_hdrbc         db '--- break_change (counts for 50 25 10 5 1) ---$'
 t_cf0           db 'CF=0 change = $'
 t_cf1           db 'CF=1 shortfall = $'
 t_calc          dw 50, 25,  10, 25,  25, 25     ; payment, price pairs
+t_ncalc         equ ($ - t_calc) / 4     ; number of pairs
 t_changes       dw 35, 0, 100, 99, 964
+t_nchanges      equ ($ - t_changes) / 2  ; number of values
+t_axafter       db ' AX after: $'
 
 include utils.inc
 include menu.inc
@@ -61,7 +64,7 @@ main proc
     call print_str
     call newline
     mov si, offset t_calc
-    mov cx, 3
+    mov cx, t_ncalc
 tc_loop:
     mov ax, word ptr [si]
     call print_int          ; payment
@@ -105,7 +108,7 @@ tc_next:
     call print_str
     call newline
     mov si, offset t_changes
-    mov cx, 5
+    mov cx, t_nchanges
 tk_loop:
     mov ax, word ptr [si]
     call print_int          ; the change value
@@ -116,6 +119,11 @@ tk_loop:
     mov ax, word ptr [si]
     call break_change
     call t_show_counts
+    push ax                 ; print_str clobbers AX
+    mov dx, offset t_axafter
+    call print_str
+    pop ax
+    call print_int          ; must equal the value tested (AX is preserved)
     call newline
     add si, 2
     loop tk_loop

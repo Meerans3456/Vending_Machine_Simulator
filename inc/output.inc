@@ -1,6 +1,6 @@
 ; ==========================================================
 ; output.inc - print_change, print_receipt
-; Requires: data.inc, utils.inc, input.inc (lookup_name)
+; Requires: data.inc, utils.inc, lookup.inc (lookup_name)
 ; ==========================================================
 
 .code

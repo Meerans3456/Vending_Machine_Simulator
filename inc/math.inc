@@ -27,8 +27,9 @@ calc_change endp
 
 ; break_change: AX = change amount.
 ; Output: denom_count[0..4] = number of 50, 25, 10, 5, 1 coins/notes.
-; AX is DESTROYED (ends as 0). Save the change value in 'change' first.
+; AX is preserved.
 break_change proc
+    push ax
     push bx
     push cx
     push dx
@@ -51,5 +52,6 @@ bc_loop:
     pop dx
     pop cx
     pop bx
+    pop ax
     ret
 break_change endp
