@@ -33,6 +33,11 @@ dm_loop:
     call print_str          ; " - "
     mov ax, word ptr [product_prices + si]
     call print_int          ; price
+    cmp word ptr [product_stock + si], 0
+    jne dm_endline
+    mov dx, offset msg_sold_tag
+    call print_str          ; " (sold out)"
+dm_endline:
     call newline
     add si, 2
     inc bx

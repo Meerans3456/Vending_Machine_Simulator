@@ -1,5 +1,5 @@
 ; ==========================================================
-; output.inc - print_change, print_receipt
+; output.inc - print_change, print_receipt, print_summary
 ; Requires: data.inc, utils.inc, lookup.inc (lookup_name)
 ; ==========================================================
 
@@ -91,3 +91,26 @@ print_receipt proc
     pop ax
     ret
 print_receipt endp
+
+; print_summary: prints the number of sales made and the total taken.
+; Input : variables sales_count and sales_total
+; Saves and restores AX and DX.
+print_summary proc
+    push ax
+    push dx
+
+    mov dx, offset msg_sales
+    call print_str
+    mov ax, word ptr sales_count
+    call print_int
+
+    mov dx, offset msg_taken
+    call print_str
+    mov ax, word ptr sales_total
+    call print_int
+    call newline
+
+    pop dx
+    pop ax
+    ret
+print_summary endp

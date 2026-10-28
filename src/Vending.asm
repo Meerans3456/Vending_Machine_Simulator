@@ -1,16 +1,19 @@
 ; ============================================================
 ; VENDING MACHINE SIMULATOR - main program
 ; Target : 8086 DOS (16-bit), assembled with JWasm, run in DOSBox
-; Build  : build vending        (or: JWasm.exe -0 -mz -Fo vending.exe vending.asm)
+; Build  : .\build.bat vending   (JWasm; run from the project folder)
 ;
 ; Module files (pasted in at assembly time by 'include'):
 ;   data.inc    tables, messages, variables      (must come first)
 ;   utils.inc   print_str, newline, print_char, print_int, clear_screen, wait_key
 ;   lookup.inc  code_to_offset, lookup_price, lookup_name
-;   input.inc   read_int, read_product, read_payment
+;   stock.inc   lookup_stock, take_stock
+;   input.inc   read_int, ask_int, read_product
 ;   menu.inc    display_menu
 ;   math.inc    calc_change, break_change
-;   output.inc  print_change, print_receipt
+;   output.inc  print_change, print_receipt, print_summary
+;   admin.inc   admin_mode (PIN-protected restock and view)
+;   file.inc    load_state, save_state (stock and coins survive between runs)
 ; ============================================================
 .model small
 .stack 100h
@@ -18,10 +21,13 @@
 include data.inc
 include utils.inc
 include lookup.inc
+include stock.inc
 include input.inc
 include menu.inc
 include math.inc
 include output.inc
+include admin.inc
+include file.inc
 
 .code
 
@@ -31,20 +37,25 @@ include output.inc
 main proc
     mov ax, @data          ; mandatory: initialize DS
     mov ds, ax
+    call load_state        ; carry on with the stock and coins saved by the last run
 
 main_loop:
+    call save_state        ; keep the save file up to date (after every sale or admin change)
     call clear_screen      ; fresh screen for every transaction
     call display_menu
-    call read_product      ; AL = code (0 = exit); re-prompts on bad input
-    jc main_loop           ; safety net; read_product never returns CF=1
-    cmp al, 0
+    call read_product      ; AX = 0 (exit), ADMIN_CODE (admin mode) or a product in stock
+    cmp ax, ADMIN_CODE
+    jne main_notadmin
+    call admin_mode
+    jmp main_loop
+main_notadmin:
+    cmp ax, 0
     jne main_buy
     jmp main_done          ; trampoline: main_done is out of short-jump range
 
 main_buy:
     mov sel_code, al
-    call lookup_price      ; AL = code -> AX = price
-    jc main_loop           ; safety net; code was already validated
+    call lookup_price      ; AL = code -> AX = price (the code is already valid)
     mov price, ax
 
     mov dx, offset msg_price
@@ -56,7 +67,9 @@ main_buy:
     mov word ptr payment, 0 ; nothing inserted yet
 
 pay_loop:
-    call read_payment      ; AX = money inserted now; 0 = cancel
+    mov dx, offset msg_pay
+    mov bx, MAX_INPUT
+    call ask_int           ; AX = money inserted now; 0 = cancel
     cmp ax, 0
     je main_cancel
     ; The total is below the price before every insertion, and each insertion
@@ -70,7 +83,16 @@ pay_loop:
 
     mov change, ax         ; print_receipt reads this variable
     call break_change
+    jc main_nochange        ; CF=1: the machine lacks the coins for exact change
     call print_receipt
+    mov al, sel_code
+    call take_stock         ; one unit leaves the machine
+    call take_coins         ; the change coins leave the machine
+    mov ax, word ptr payment
+    call put_coins          ; the inserted money joins the machine's coins
+    inc word ptr sales_count        ; record the completed sale
+    mov ax, word ptr price
+    add word ptr sales_total, ax
     call wait_key          ; let the user read the receipt
     jmp main_loop
 
@@ -83,9 +105,15 @@ main_short:
     call newline
     jmp pay_loop           ; ask for more money (not back to the menu)
 
+main_nochange:
+    mov dx, offset msg_nochange
+    call print_str
+    jmp main_refund        ; nothing is sold: give the money back
+
 main_cancel:
     mov dx, offset msg_cancel
     call print_str
+main_refund:               ; shared by cancel and "no exact change"
     mov ax, word ptr payment
     cmp ax, 0
     je main_cancel_end     ; nothing inserted -> nothing to refund
@@ -99,6 +127,7 @@ main_cancel_end:
     jmp main_loop
 
 main_done:
+    call print_summary
     mov dx, offset msg_bye
     call print_str
     call newline

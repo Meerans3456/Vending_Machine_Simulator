@@ -82,7 +82,7 @@ The same script builds every test program. Give it the program name without an e
 | Name | Source |
 |---|---|
 | `vending` | `src\vending.asm` |
-| `t_utils`, `t_lookup`, `t_input`, `t_math`, `t_output` | `tests\<name>.asm` |
+| `t_utils`, `t_lookup`, `t_stock`, `t_input`, `t_math`, `t_output`, `t_admin`, `t_file` | `tests\<name>.asm` |
 
 What `build.bat` runs (you never need to type this yourself):
 
@@ -113,6 +113,7 @@ vending.exe
 - `mount d ...` makes your project folder the drive **D:** inside DOSBox.
 - `d:` switches to that drive, and `dir` lists its files. You should see `VENDING.EXE`.
 - `vending.exe` starts the program. Enter `0` at the menu to exit it.
+- The program creates `VENDING.DAT` in the mounted folder to save its stock and coins. Delete that file to start again with a full machine.
 - Type `exit` to close DOSBox.
 
 > **Important:** DOSBox reads the folder when you mount it and remembers the listing. If you build a **new** program while DOSBox is open, press **Ctrl+F4** (rescan drives) before running it. Rebuilding a program that already exists does not need this.
@@ -124,7 +125,7 @@ vending.exe
 Every module has its own test program. To build all of them in one go (PowerShell, from the project folder):
 
 ```powershell
-'vending','t_utils','t_lookup','t_input','t_math','t_output' | ForEach-Object { .\build.bat $_ }
+'vending','t_utils','t_lookup','t_stock','t_input','t_math','t_output','t_admin','t_file' | ForEach-Object { .\build.bat $_ }
 ```
 
 Press **Ctrl+F4** in DOSBox if it was already open, then run each `.exe` and compare the output with the expected results. [TEST_RESULTS.md](TEST_RESULTS.md) lists, for every test program, what to type (some are interactive), what you should see, and the recorded results.
@@ -144,6 +145,7 @@ DOSBox-X has a built-in debugger; plain DOSBox usually does not. Build as usual,
 **What is not** (listed in `.gitignore`):
 
 - built programs: `*.exe` in the project folder;
+- save files: `*.dat` (for example `VENDING.DAT`, written when the program runs);
 - `docs\` (the project report and flowcharts, which the team keeps outside the repository);
 - assembler leftovers: `*.obj`, `*.o`, `*.map`, `*.lst`, `*.tmp`, `*.bak`.
 
@@ -181,10 +183,11 @@ Team rules:
 |---|---|---|
 | PowerShell says `build.bat` "is not recognized" | PowerShell does not run scripts from the current folder by name | Type `.\build.bat vending` |
 | `JWasm.exe not found at tools\JWasm\JWasm.exe` | JWasm is not in the expected place | Do step 3 |
-| `Cannot find xxx.asm in src\ or tests\` | Misspelled program name | Use one of: `vending`, `t_utils`, `t_lookup`, `t_input`, `t_math`, `t_output` (no extension) |
+| `Cannot find xxx.asm in src\ or tests\` | Misspelled program name | Use one of: `vending`, `t_utils`, `t_lookup`, `t_stock`, `t_input`, `t_math`, `t_output`, `t_admin`, `t_file` (no extension) |
 | JWasm cannot open an include file such as `data.inc` | JWasm was run by hand from another folder, or without `-Iinc` | Use `build.bat` from the project folder, or add `-Iinc` and run from the project folder |
 | The assembler stops with a "forced error" in `data.inc` | `product_names` and `product_prices` have a different number of entries | Make the two tables the same length (README, *Adding or changing a product*) |
 | DOSBox says `Illegal command: xxx.exe` | The file is not in the mounted folder (not built yet, wrong folder), DOSBox has not seen it yet, or the name is longer than 8 characters | Run `dir` to check; build it; press **Ctrl+F4**; keep names to 8 characters |
 | `dir` in DOSBox does not show a file you just built | DOSBox cached the folder listing at mount time | Press **Ctrl+F4**, or `exit` and mount again |
 | `mount` reports an error | Wrong path, or a path with spaces without quotes | Check the path exists and put it in quotes |
 | The program behaves like an old version | The `.exe` was not rebuilt after `git pull` or an edit | Run `.\build.bat vending` again |
+| The machine starts with less stock or fewer coins than expected | The previous run saved its state in `VENDING.DAT` | Delete `VENDING.DAT`, or use the admin refill options |

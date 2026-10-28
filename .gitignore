@@ -15,3 +15,6 @@
 *.lst
 *.tmp
 *.bak
+
+# Save file written by the program (stock and coins)
+*.dat

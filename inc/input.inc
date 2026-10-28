@@ -1,24 +1,27 @@
 ; ==========================================================
-; input.inc - read_int, read_product, read_payment
-; Requires: data.inc, utils.inc
+; input.inc - read_int, ask_int, read_product
+; Requires: data.inc, utils.inc, stock.inc (lookup_stock)
 ; ==========================================================
 
 .code
 
 ; read_int: reads a decimal number from the keyboard until Enter.
-; Output: AX = value (0..MAX_INPUT), CF=0 ; CF=1 if invalid (AX undefined)
-; Invalid = empty input, non-digit character, or value > MAX_INPUT.
+; Input : DX = largest value accepted (0..65535)
+; Output: AX = value, CF=0 ; CF=1 if invalid (AX undefined)
+; Invalid = empty input, a non-digit, or a value above DX (or above 65535).
 ; On invalid input the rest of the line is discarded.
 read_int proc
     push bx
     push cx
     push dx
+    push si
+    mov si, dx              ; SI = largest value accepted
     xor bx, bx              ; BX = accumulator
     xor cx, cx              ; CX = number of digits typed
 ri_loop:
     mov ah, 01h             ; read char with echo -> AL
     int 21h
-    cmp al, CR             ; Enter?
+    cmp al, CR              ; Enter?
     je ri_enter
     cmp al, '0'
     jb ri_bad
@@ -29,13 +32,17 @@ ri_loop:
     push ax                 ; save digit
     mov ax, bx
     mov dx, 10
-    mul dx                  ; DX:AX = BX*10 (DX = 0: MAX_INPUT*10 fits in 16 bits)
+    mul dx                  ; DX:AX = accumulator * 10
+    mov bx, dx              ; BX = high word (not zero: more than 16 bits)
     pop dx                  ; DX = digit
+    or bx, bx
+    jnz ri_bad              ; too big for 16 bits
     add ax, dx
-    mov bx, ax
+    jc ri_bad               ; too big for 16 bits
+    mov bx, ax              ; new accumulator
     inc cx
-    cmp bx, MAX_INPUT
-    ja ri_bad
+    cmp bx, si
+    ja ri_bad               ; above the largest accepted value
     jmp ri_loop
 ri_enter:
     cmp cx, 0               ; no digits typed -> invalid
@@ -43,7 +50,7 @@ ri_enter:
     mov ax, bx
     clc
     jmp ri_exit
-ri_bad:                     ; flush the rest of the line
+ri_bad:                     ; discard the rest of the line
     mov ah, 01h
     int 21h
     cmp al, CR
@@ -51,49 +58,66 @@ ri_bad:                     ; flush the rest of the line
 ri_fail:
     stc
 ri_exit:
+    pop si
     pop dx
     pop cx
     pop bx
     ret
 read_int endp
 
+; ask_int: prints a prompt and reads a number, asking again until it is valid.
+; Input : DX = prompt string, BX = largest value accepted
+; Output: AX = value (BX and DX are preserved)
+ask_int proc
+    push si
+    push dx
+    mov si, dx              ; SI = prompt
+ai_loop:
+    mov dx, si
+    call print_str          ; prompt
+    mov dx, bx
+    call read_int
+    jnc ai_done
+    mov dx, offset msg_badnum
+    call print_str
+    jmp ai_loop
+ai_done:
+    pop dx
+    pop si
+    ret
+ask_int endp
+
 ; read_product: prompts for a product code and validates it.
-; Re-prompts internally on invalid input.
-; Output: AL = code (0 = exit, 1..6 = product), CF=0
+; Asks again on an invalid number, an unknown code or a sold-out product.
+; Output: AX = ADMIN_CODE (enter admin mode), 0 (exit), or the code of a
+;         product that is in stock. BX and DX are preserved.
 read_product proc
+    push bx
+    push dx
 rp_loop:
     mov dx, offset msg_select
-    call print_str
-    call read_int
-    jc rp_badnum
+    mov bx, 0FFFFh          ; any 16-bit number: ADMIN_CODE is larger than 999
+    call ask_int
+    cmp ax, ADMIN_CODE
+    je rp_exit
     cmp ax, NUM_PRODUCTS
     ja rp_badcode
-    clc                     ; valid: AX = 0..6, so AL = code
-    ret
+    cmp ax, 0
+    je rp_exit              ; 0 = exit
+    push ax                 ; keep the code while the stock is checked
+    call lookup_stock       ; AX = units left (the code is in AL)
+    cmp ax, 0
+    pop ax                  ; pop does not change the flags
+    jne rp_exit             ; in stock
+    mov dx, offset msg_soldout
+    jmp rp_say
 rp_badcode:
     mov dx, offset msg_invalid
+rp_say:
     call print_str
     jmp rp_loop
-rp_badnum:
-    mov dx, offset msg_badnum
-    call print_str
-    jmp rp_loop
-read_product endp
-
-; read_payment: prompts for money to insert (used for the first payment
-; and for every extra insertion after "insufficient funds").
-; Re-prompts internally on non-numeric or over-MAX_INPUT input.
-; Output: AX = amount (0..MAX_INPUT), CF=0.   AX = 0 means the user CANCELLED.
-read_payment proc
-rpay_loop:
-    mov dx, offset msg_pay
-    call print_str
-    call read_int
-    jc rpay_bad
-    clc
+rp_exit:
+    pop dx
+    pop bx
     ret
-rpay_bad:
-    mov dx, offset msg_badnum
-    call print_str
-    jmp rpay_loop
-read_payment endp
+read_product endp

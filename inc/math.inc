@@ -25,33 +25,43 @@ cc_short:
     ret
 calc_change endp
 
-; break_change: AX = change amount.
-; Output: denom_count[0..4] = number of 50, 25, 10, 5, 1 coins/notes.
-; AX is preserved.
+; break_change: works out which coins to give as change.
+; Input : AX = change amount
+; Output: denom_count[] = coins to give of each denomination (50, 25, 10, 5, 1),
+;         largest first, never more than coin_stock[] holds.
+;         CF=0 -> the change is made exactly
+;         CF=1 -> the machine lacks the coins (denom_count[] must not be used)
+; It only calculates; take_coins removes the coins from the stock. AX is preserved.
 break_change proc
     push ax
     push bx
     push cx
     push dx
     push si
-    push di
-    mov si, offset denoms
-    mov di, offset denom_count
-    mov cx, NUM_DENOMS
+    xor si, si              ; SI = byte offset into the three word tables
 bc_loop:
-    mov bx, word ptr [si]   ; BX = current denomination
+    mov bx, word ptr [denoms + si]      ; BX = denomination
+    push ax                 ; the amount still to cover
     xor dx, dx              ; clear DX before DIV (avoid overflow crash)
-    div bx                  ; AX = quotient (count), DX = remainder
-    mov word ptr [di], ax   ; store count
-    mov ax, dx              ; remainder becomes next dividend
+    div bx                  ; AX = coins that would fit
+    mov cx, word ptr [coin_stock + si]  ; CX = coins in stock
+    cmp ax, cx
+    jbe bc_use              ; enough coins in stock
+    mov ax, cx              ; otherwise use all we have
+bc_use:
+    mov word ptr [denom_count + si], ax
+    mul bx                  ; AX = value of those coins (DX = 0: it never exceeds the amount)
+    mov cx, ax
+    pop ax                  ; amount still to cover, before this denomination
+    sub ax, cx              ; amount still to cover, after it
     add si, 2
-    add di, 2
-    loop bc_loop
-    pop di
+    cmp si, NUM_DENOMS * 2
+    jb bc_loop
+    neg ax                  ; CF=1 if an amount is left over, CF=0 if nothing is
     pop si
     pop dx
     pop cx
     pop bx
-    pop ax
+    pop ax                  ; give the caller's AX back (pop keeps CF)
     ret
 break_change endp

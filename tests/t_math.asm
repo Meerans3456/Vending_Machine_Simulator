@@ -9,7 +9,7 @@ include data.inc
 
 ; --- test-only data ---
 .data
-t_hdrm          db '--- display_menu ---$'
+t_hdrm          db '--- display_menu (product 3 is sold out) ---$'
 t_hdrcc         db '--- calc_change (payment - price) ---$'
 t_hdrbc         db '--- break_change (counts for 50 25 10 5 1) ---$'
 t_cf0           db 'CF=0 change = $'
@@ -19,6 +19,8 @@ t_ncalc         equ ($ - t_calc) / 4     ; number of pairs
 t_changes       dw 35, 0, 100, 99, 964
 t_nchanges      equ ($ - t_changes) / 2  ; number of values
 t_axafter       db ' AX after: $'
+t_nochange      db 'no exact change $'
+t_hdrlim        db '--- break_change with limited coins ---$'
 
 include utils.inc
 include menu.inc
@@ -48,6 +50,35 @@ tsc_loop:
     ret
 t_show_counts endp
 
+; t_break: AX = change amount to try. Prints "amount: counts" or
+; "amount: no exact change", then AX after the call (it must be unchanged).
+t_break proc
+    push ax                 ; keep the amount
+    call print_int          ; the amount
+    mov dl, ':'
+    call print_char
+    mov dl, ' '
+    call print_char
+    pop ax                  ; AX = amount again (print_char clobbered it)
+    call break_change
+    jc tb_fail
+    call t_show_counts      ; it saves and restores AX
+    jmp tb_after
+tb_fail:
+    push ax
+    mov dx, offset t_nochange
+    call print_str
+    pop ax
+tb_after:
+    push ax                 ; print_str clobbers AX
+    mov dx, offset t_axafter
+    call print_str
+    pop ax
+    call print_int          ; must equal the amount (AX is preserved, also on failure)
+    call newline
+    ret
+t_break endp
+
 main proc
     mov ax, @data
     mov ds, ax
@@ -56,6 +87,7 @@ main proc
     mov dx, offset t_hdrm
     call print_str
     call newline
+    mov word ptr [product_stock + 4], 0   ; make product 3 sold out
     call display_menu
 
     ; --- calc_change on (payment, price) pairs ---
@@ -111,22 +143,26 @@ tc_next:
     mov cx, t_nchanges
 tk_loop:
     mov ax, word ptr [si]
-    call print_int          ; the change value
-    mov dl, ':'
-    call print_char
-    mov dl, ' '
-    call print_char
-    mov ax, word ptr [si]
-    call break_change
-    call t_show_counts
-    push ax                 ; print_str clobbers AX
-    mov dx, offset t_axafter
-    call print_str
-    pop ax
-    call print_int          ; must equal the value tested (AX is preserved)
-    call newline
+    call t_break
     add si, 2
     loop tk_loop
+
+    ; --- break_change with limited coins ---
+    call newline
+    mov dx, offset t_hdrlim
+    call print_str
+    call newline
+    mov word ptr [coin_stock + 8], 2            ; only two 1-coins left
+    mov ax, 2
+    call t_break                                ; 0 0 0 0 2
+    mov ax, 3
+    call t_break                                ; no exact change
+    mov word ptr [coin_stock + 8], FULL_COINS  ; 1-coins restored
+    mov word ptr [coin_stock + 2], 0            ; no 25-coins
+    mov ax, 30
+    call t_break                                ; 0 0 3 0 0 (three 10-coins)
+    mov ax, 35
+    call t_break                                ; 0 0 3 1 0
 
     mov ah, 4Ch
     int 21h

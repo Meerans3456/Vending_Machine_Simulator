@@ -13,6 +13,7 @@ include data.inc
 .data
 t_hdr           db '--- print_change with hardcoded counts ---$'
 t_hdr2          db '--- print_receipt ---$'
+t_hdr3          db '--- print_summary ---$'
 ; each case = 6 words: change, count50, count25, count10, count5, count1
 t_cases         dw 35,  0, 1, 1, 0, 0
                 dw 0,   0, 0, 0, 0, 0
@@ -99,6 +100,20 @@ tp_copy:
     mov word ptr [denom_count + 6], 1
     mov word ptr [denom_count + 8], 0
     call print_receipt
+
+    ; --- print_summary tests (variables set by hand) ---
+    call newline
+    mov dx, offset t_hdr3
+    call print_str
+    call newline
+
+    mov sales_count, 3
+    mov sales_total, 70
+    call print_summary      ; expect 3 and 70
+
+    mov sales_count, 0
+    mov sales_total, 0
+    call print_summary      ; expect 0 and 0
 
     mov ah, 4Ch
     int 21h
