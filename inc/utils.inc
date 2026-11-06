@@ -1,5 +1,5 @@
 ; ==========================================================
-; utils.inc - print_str, newline, print_char, print_int, clear_screen, wait_key
+; utils.inc - print_str, newline, print_char, print_int, print_spaces, print_name_col, print_int3, clear_screen, wait_key
 ; Requires: data.inc
 ; ==========================================================
 
@@ -74,6 +74,78 @@ pi_done:
     pop ax
     ret
 print_int endp
+
+; print_spaces: AX = number of spaces to print (0 prints nothing).
+; Saves and restores every register it uses.
+print_spaces proc
+    push ax
+    push cx
+    push dx
+    mov cx, ax              ; CX = number of spaces
+    jcxz ps_done            ; nothing to print
+ps_loop:
+    mov ah, 02h
+    mov dl, ' '
+    int 21h
+    loop ps_loop
+ps_done:
+    pop dx
+    pop cx
+    pop ax
+    ret
+print_spaces endp
+
+; print_name_col: DX = offset of a '$'-terminated text; prints it and pads
+; it with spaces up to NAME_WIDTH characters, so the next column lines up.
+; Saves and restores every register it uses.
+print_name_col proc
+    push ax
+    push dx
+    push di
+    call print_str          ; print the text
+    mov di, dx              ; DI walks the text to measure it
+    xor dx, dx              ; DX = length of the text
+pn_len:
+    cmp byte ptr [di], '$'  ; end of the text?
+    je pn_lendone
+    inc di
+    inc dx
+    jmp pn_len
+pn_lendone:
+    mov ax, NAME_WIDTH
+    sub ax, dx              ; AX = spaces needed to fill the column
+    jbe pn_done             ; the text already fills the column
+    call print_spaces
+pn_done:
+    pop di
+    pop dx
+    pop ax
+    ret
+print_name_col endp
+
+; print_int3: AX = unsigned integer (0..999) printed right-aligned in 3 columns
+; (1 digit -> 2 spaces first, 2 digits -> 1 space, 3 digits -> none).
+; Saves and restores every register it uses.
+print_int3 proc
+    push ax
+    push dx
+    mov dx, 2               ; 1 digit  -> 2 spaces
+    cmp ax, 10
+    jb p3_pad
+    mov dx, 1               ; 2 digits -> 1 space
+    cmp ax, 100
+    jb p3_pad
+    xor dx, dx              ; 3 digits -> no space
+p3_pad:
+    push ax                 ; keep the number
+    mov ax, dx
+    call print_spaces       ; the padding
+    pop ax
+    call print_int          ; the number
+    pop dx
+    pop ax
+    ret
+print_int3 endp
 
 ; clear_screen: blanks the whole 80x25 screen and homes the cursor.
 ; Uses INT 10h fn 06h (scroll window up with AL=0 = clear), then fn 02h.

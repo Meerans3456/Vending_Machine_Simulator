@@ -1,7 +1,7 @@
 ; ==========================================================
 ; file.inc - load_state, save_state
 ; Requires: data.inc
-; The save file holds product_stock and coin_stock (sales totals are not saved).
+; The save file holds product_stock, coin_stock, sales_count and sales_total.
 ; ==========================================================
 
 .code

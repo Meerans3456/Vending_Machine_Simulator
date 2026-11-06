@@ -1,8 +1,8 @@
 # Vending Machine Simulator: Test Results
 
-**Version tested:** the current program, with the extended features (stock levels, coin inventory, admin mode, save file).
+**Version tested:** the current program, with the extended features (stock levels, coin inventory, admin mode, save file) and the phase 3 changes (Backspace, aligned menus, saved sales totals, admin lockout, changeable admin code and PIN).
 **Environment:** Windows, JWasm v2.11 (`-0 -mz`), run in DOSBox.
-**How results were obtained:** each check was run by the team in DOSBox and compared with the expected output. "PASS" means the observed output matched the expected output. The checks for the extended features (sections 1.6 and 2.5) were run in the same way and all passed. Checks marked "Superseded" no longer apply because the coin inventory changed the behaviour; they are replaced by the checks named in the table.
+**How results were obtained:** each check was run by the team in DOSBox and compared with the expected output. "PASS" means the observed output matched the expected output. The checks for the extended features (sections 1.6 and 2.5) and for phase 3 (sections 1.7 and 2.6) were run in the same way and all passed. Checks marked "Superseded" no longer apply because the coin inventory changed the behaviour; they are replaced by the checks named in the table.
 
 Rebuild any program with `.\build.bat <name>`, then run `<name>.exe` in DOSBox.
 
@@ -21,17 +21,17 @@ Rebuild any program with `.\build.bat <name>`, then run `<name>.exe` in DOSBox.
 
 | Program | Interactive? | What to do |
 |---|---|---|
-| `t_utils.exe` | one key press | Read the printed lines (section 1.1). When asked, press a key: the screen must clear and the next text start at the top-left. |
+| `t_utils.exe` | one key press | Read the printed lines (sections 1.1 and 1.7), including the `print_spaces`, `print_name_col` and `print_int3` lines. When asked, press a key: the screen must clear and the next text start at the top-left. |
 | `t_lookup.exe` | no | It prints three blocks (price, name, offset) for the codes 0, 1, 3, 6, 7, 9. Compare with section 1.3. |
-| `t_input.exe` | yes | **First phase** (`read_int>` prompt, limit 999): type `42`, `abc`, an empty line (just Enter), `999`, `1000`, `70000`, `12x`, and finally `0` to end the phase. **Second phase** (limit 65535): type `70000`, then `0`. **Third phase** (`read_product`, product 3 is sold out): type `9`, `abc`, `3`, then `4`. **Fourth phase** (`ask_int`): type `abc`, then `25`. Compare with sections 1.2 and 1.6. |
+| `t_input.exe` | yes | **First phase** (`read_int>` prompt, limit 999): type `42`, `abc`, an empty line (just Enter), `999`, `1000`, `70000`, `12x`, and finally `0` to end the phase. **Second phase** (limit 65535): type `70000`, then `0`. **Third phase** (`read_product`, product 3 is sold out): type `9`, `abc`, `3`, then `4`. **Fourth phase** (`ask_int`): type `abc`, then `25`. In the first phase also try `a`, Backspace, `5`, Enter and `1`, `2`, Backspace, `5`, Enter. Compare with sections 1.2, 1.6 and 1.7. |
 | `t_stock.exe` | no | It prints four blocks (`lookup_stock`, `take_stock`, `take_coins`, `put_coins`). Compare with section 1.6. |
 | `t_math.exe` | no | It prints the menu (product 3 sold out), then the `calc_change` and `break_change` results, including a block with limited coins (the menu may scroll off the top; scroll up or enlarge the window). Compare with sections 1.4 and 1.6. |
 | `t_output.exe` | no | It prints five change breakdowns, three receipts, then two sales summaries. Compare with sections 1.5 and 1.6. |
-| `t_admin.exe` | yes | Parts 1 to 4 are automatic (press a key after each screen). Part 5: type `2`, then `7`. Part 6: type `25`, then `4`. Part 7: type any PIN. Compare with section 1.6. |
-| `t_file.exe` | no | It prints three blocks using its own `T_STATE.DAT`, so your real `VENDING.DAT` is not touched. Compare with section 1.6. |
+| `t_admin.exe` | yes | Parts 1 to 4 are automatic (press a key after each screen). Part 5: type `2`, then `7`. Part 6: type `25`, then `4`. Part 7 (`ask_pin`, keys shown as `*`) runs once: type `0`, then run it again with `9999`, and again with `1234`. Part 8 is automatic (lock timing with fake clock values). Part 9: type `12345` twice. Part 10: type `4321` twice. Compare with sections 1.6 and 1.7. |
+| `t_file.exe` | no | It prints three blocks (products, coins, sales and admin values) using its own `T_STATE.DAT`, so your real `VENDING.DAT` is not touched. Compare with sections 1.6 and 1.7. |
 | `vending.exe` | yes | Follow the scenarios in section 2 (for example code `1`, pay `50`). |
 
-Section 2.5 needs a known starting state: delete `VENDING.DAT` before the first scenario so the machine starts full (3 of each product, 10 of each coin), and use the admin refill options between scenarios when needed.
+Sections 2.5 and 2.6 need a known starting state: delete `VENDING.DAT` before the first scenario so the machine starts full (3 of each product, 10 of each coin), and use the admin refill options between scenarios when needed.
 
 Section 3 (design checks) is done by editing `inc\data.inc`, rebuilding `vending`, and undoing the edit afterwards (delete `VENDING.DAT` after changing the number of products).
 
@@ -40,6 +40,7 @@ Section 3 (design checks) is done by editing `inc\data.inc`, rebuilding `vending
 - *Payment, receipt and screen features:* running total with retry, cancel with refund, receipt, screen clear and pause. Earlier checks were re-run afterwards.
 - *Code refinement:* the menu is printed from the tables, lookups moved into their own module, unused data removed, `break_change` preserves AX, named constants and computed table sizes. All earlier checks were re-run; the checks marked **NEW** were added.
 - *Extended features:* stock levels with sold-out products, coin inventory (change taken from the coins in stock, inserted money added to it), exact-change refusal with refund, sales summary, PIN-protected admin mode, and a save file. `read_payment` was replaced by the shared `ask_int`. The checks in sections 1.6 and 2.5 were added and passed, and three earlier checks were superseded.
+- *Phase 3:* Backspace support in number entry (the line is checked at Enter), aligned customer menu and admin product list, sales totals saved in `VENDING.DAT`, admin PIN hidden with `*`, `0` to go back, wrong PINs re-ask only the PIN, lockout of 1, 5, 10, 20, 30 and then 60 minutes after 3 wrong PINs, and admin menu choices to change the admin code and the PIN (both saved). The checks in sections 1.7 and 2.6 were added and passed.
 
 ---
 
@@ -49,14 +50,14 @@ Each module has its own standalone test program, so a failure points to one modu
 
 | Test program | Covers | Source module |
 |---|---|---|
-| `t_utils.exe` | `print_str`, `print_char`, `print_int`, `clear_screen`, `wait_key` | `utils.inc` |
+| `t_utils.exe` | `print_str`, `print_char`, `print_int`, `print_spaces`, `print_name_col`, `print_int3`, `clear_screen`, `wait_key` | `utils.inc` |
 | `t_input.exe` | `read_int` (interactive), `read_product`, `ask_int` | `input.inc` |
 | `t_lookup.exe` | `code_to_offset`, `lookup_price`, `lookup_name` | `lookup.inc` |
 | `t_math.exe` | `display_menu`, `calc_change`, `break_change` | `menu.inc`, `math.inc` |
 | `t_output.exe` | `print_change`, `print_receipt`, `print_summary` | `output.inc` |
 | `t_stock.exe` | `lookup_stock`, `take_stock`, `take_coins`, `put_coins` | `stock.inc` |
-| `t_admin.exe` | `admin_view`, `refill_products`, `refill_coins`, `set_product_stock`, `set_coin_count`, `ask_pin` | `admin.inc` |
-| `t_file.exe` | `save_state`, `load_state` | `file.inc` |
+| `t_admin.exe` | `admin_view`, `refill_products`, `refill_coins`, `set_product_stock`, `set_coin_count`, `ask_pin`, `lock_left_at`, `start_lock`, `change_admin_code`, `change_admin_pin` | `admin.inc` |
+| `t_file.exe` | `save_state`, `load_state` (stock, coins, sales, admin values) | `file.inc` |
 
 ### 1.1 `t_utils` (utils.inc)
 
@@ -144,10 +145,36 @@ The menu printed at the top of `t_math.exe` is also checked by eye; see end-to-e
 | 53 | `refill_coins` | after check 52 | every coin back to 10 | PASS |
 | 54 | `set_product_stock` | `2`, then `7` | product 2 shows 7 | PASS |
 | 55 | `set_coin_count` | `25`, then `4` | the 25-coins show 4 | PASS |
-| 56 | `ask_pin` | any input | `PIN accepted` only for `1234`; anything else, including `abc`, gives `PIN rejected` | PASS |
-| 57 | `load_state` | no save file | nothing changes: products 3 3 3 3 3 3, coins 10 10 10 10 10 | PASS |
-| 58 | `save_state`, `load_state` | save `0 2 3 3 3 3 / 7 10 10 10 10`, scramble every value to 9, load | the saved values come back | PASS |
+| 56 | `ask_pin` | `0`, then `9999`, then `1234` (keys shown as `*`) | `PIN cancelled` for 0, `PIN rejected` for 9999, `PIN accepted` for 1234 | PASS |
+| 57 | `load_state` | no save file | nothing changes: products 3 3 3 3 3 3, coins 10 10 10 10 10, sales 0 0, admin 31415 1234 | PASS |
+| 58 | `save_state`, `load_state` | save `0 2 3 3 3 3 / 7 10 10 10 10 / sales 4 65 / admin 12345 4321`, scramble every value to 9, load | the saved values come back | PASS |
 | 59 | `load_state` | a 3-byte file | the file is ignored; the values stay as they were (all 9) | PASS |
+
+### 1.7 Phase 3 (module level)
+
+| No. | Routine | Input | Expected | Result |
+|---|---|---|---|---|
+| 60 | `read_int` | `a`, Backspace, `5`, Enter | the letter is erased; AX = 5, CF = 0 | PASS |
+| 61 | `read_int` | `1`, `2`, Backspace, `5`, Enter | AX = 15, CF = 0 | PASS |
+| 62 | `read_int` | `12x`, Backspace, Enter | AX = 12, CF = 0 | PASS |
+| 63 | `read_int` | Backspace with nothing typed, then `7`, Enter | nothing is erased; AX = 7, CF = 0 | PASS |
+| 64 | `print_spaces` | AX = 3, then AX = 0 | three spaces between the brackets; nothing printed for 0 | PASS |
+| 65 | `print_name_col` | `Soda` | `Soda` followed by spaces up to the name column width | PASS |
+| 66 | `print_int3` | AX = 5, 15, 150 | `  5`, ` 15`, `150` (right-aligned in 3 columns) | PASS |
+| 67 | `display_menu` | product 3 sold out | names, dashes and prices line up in columns; `(sold out)` still shown | PASS |
+| 68 | `admin_view`, `set_product_stock` | open the admin view and choice 4 | the product list is shown in the same aligned columns, with stock right-aligned | PASS |
+| 69 | `lock_left_at` | lock started at 1000, length 300, now 1100 | AX = 200 | PASS |
+| 70 | `lock_left_at` | same lock, now 1300 | AX = 0 and the lock is cleared | PASS |
+| 71 | `lock_left_at` | no lock running, now 1100 | AX = 0 | PASS |
+| 72 | `lock_left_at` | lock started 10 s before midnight, length 60, now 20 s after midnight | AX = 30 | PASS |
+| 73 | `lock_left_at` | same lock, now 2 s after midnight | AX = 48 | PASS |
+| 74 | `start_lock` | lock level 0 | `locked for 1 minute(s)`; lock level becomes 1 | PASS |
+| 75 | `start_lock` | lock level at the top | `locked for 60 minute(s)`; lock level stays 5 | PASS |
+| 76 | `ask_pin` | `0` | CF = 1, AX = 0 (`PIN cancelled`) | PASS |
+| 77 | `ask_pin` | `9999` | CF = 1, AX = 1 (`PIN rejected`); keys shown as `*` | PASS |
+| 78 | `ask_pin` | `1234` | CF = 0 (`PIN accepted`); keys shown as `*` | PASS |
+| 79 | `change_admin_code` | `12345` twice | `admin_code` = 12345 | PASS |
+| 80 | `change_admin_pin` | `4321` twice (shown as `*`) | `admin_pin` = 4321 | PASS |
 
 ---
 
@@ -208,11 +235,31 @@ The menu printed at the top of `t_math.exe` is also checked by eye; see end-to-e
 | 29 | No exact change | code 6, pay 999 | `Sorry, no exact change available.` and `Refunded: 999`; no receipt; the stock of product 6 is unchanged | PASS |
 | 30 | Change coins leave the stock | code 1, pay 50, then admin view | coins `50: 11`, `25: 9`, `10: 9`, `5: 10`, `1: 10` | PASS |
 | 31 | Inserted money joins the coins | code 2, pay 25, then admin view | 25-coins 11 | PASS |
-| 32 | Wrong PIN | `31415`, then `0000` | `Wrong PIN.`; after a key the menu returns | PASS |
-| 33 | Admin menu | `31415`, `1234`, choice 1, then 0 | the admin menu appears; choice 1 shows stock, coins and sales; 0 returns to the product menu | PASS |
+| 32 | Wrong PIN | `31415`, then `9999` | `Wrong PIN. Tries left: 2` and the PIN prompt again, not the admin code | PASS |
+| 33 | Admin menu | `31415`, `1234`, choice 1, then 0 | the PIN shows as `*`; the admin menu appears with choices 1 to 7; choice 1 shows stock, coins and sales; 0 returns to the product menu | PASS |
 | 34 | Admin refill and set | sell out a product, then admin choice 2; admin choice 4 with `2`, `7` | the product can be bought again; product 2 shows 7 | PASS |
-| 35 | Save file | code 1 pay 15, exit, run again, admin view | Chips stock 2; the sales counter is back to 0 | PASS |
-| 36 | Reset | delete `VENDING.DAT`, run, admin view | every product 3, every coin 10 | PASS |
+| 35 | Save file | code 1 pay 15, exit, run again, admin view | Chips stock 2; the sales count and total are kept | PASS |
+| 36 | Reset | delete `VENDING.DAT`, run, admin view | every product 3, every coin 10, sales 0 0, admin code and PIN back to the defaults | PASS |
+
+### 2.6 Phase 3 (`vending.exe`)
+
+| No. | Scenario | Input | Expected | Result |
+|---|---|---|---|---|
+| 37 | Backspace at payment | code 1, then `5`, Backspace, `5`, `0`, Enter | the first 5 is erased; paid 50; `Change: 35` | PASS |
+| 38 | Aligned menu | start the program | names, dashes and prices line up in columns | PASS |
+| 39 | Hidden PIN | `31415`, then `1234` | the admin code is shown as typed; the PIN shows as `*`; the admin menu opens | PASS |
+| 40 | Go back from the PIN | `31415`, then `0` | back to the product menu; no try is used | PASS |
+| 41 | Wrong PIN re-asks the PIN | `31415`, then `9999` | `Wrong PIN. Tries left: 2` and the PIN prompt again | PASS |
+| 42 | Lockout | three wrong PINs | `Too many wrong PINs. Admin is locked for 1 minute(s).`; back to the menu | PASS |
+| 43 | Locked countdown | `31415` while locked | `Admin is locked. Try again in 0 min NN sec.`; after a key, the menu | PASS |
+| 44 | Lock ends | `31415` after the lock time has passed | the PIN prompt is asked again | PASS |
+| 45 | Longer second lock | three more wrong PINs after the first lock ended | `locked for 5 minute(s)` | PASS |
+| 46 | Right PIN resets the level | a right PIN, then three wrong PINs | `locked for 1 minute(s)` again | PASS |
+| 47 | Restart clears the lock | get locked, exit with 0, run again, `31415` | the PIN prompt is asked straight away | PASS |
+| 48 | Change the admin code | admin choice 6: `12345` twice | `Done.`; `31415` is now an invalid product code; `12345` opens admin mode, also after a restart | PASS |
+| 49 | Change the PIN | admin choice 7: `4321` twice (shown as `*`) | `Done.`; the old PIN is rejected; `4321` works, also after a restart | PASS |
+| 50 | Change refused | codes and PINs that are too small, or two entries that differ | `The admin code must be at least 10.`, `The PIN must be 1000 to 9999.`, `The two entries do not match. Nothing changed.`; nothing changes | PASS |
+| 51 | Sales kept across runs | sale of code 1 with pay 15, exit, run again, admin view | the sales count and total include the earlier sale | PASS |
 
 ---
 
@@ -232,10 +279,10 @@ These confirm that the product data has a single source of truth.
 
 | Group | Checks | Passed | Failed |
 |---|---|---|---|
-| Module-level checks (section 1, checks 1 to 59) | 59 | 57 | 0 |
-| End-to-end checks (section 2, checks 1 to 36) | 36 | 35 | 0 |
+| Module-level checks (section 1, checks 1 to 80) | 80 | 78 | 0 |
+| End-to-end checks (section 2, checks 1 to 51) | 51 | 50 | 0 |
 | Design checks (section 3) | 3 | 3 | 0 |
-| **Total** | **98** | **95** | **0** |
+| **Total** | **134** | **131** | **0** |
 
 The remaining 3 checks are marked Superseded (module checks 16 and 29, end-to-end check 4); they are replaced by checks 40, 47 and 29 of section 2.5.
 
@@ -264,7 +311,13 @@ The remaining 3 checks are marked Superseded (module checks 16 and 29, end-to-en
 | Sales counter and total, shown at exit | Done |
 | Admin mode (secret code and PIN): view, refill, set stock and coins | Done |
 | File persistence of stock and coins | Done |
-| Exact-change search, colored text, graphics mode | Planned extensions |
+| Backspace in number entry | Done |
+| Aligned customer menu and admin product list | Done |
+| Sales totals saved between runs | Done |
+| Admin PIN hidden, `0` to go back, wrong PIN re-asks the PIN | Done |
+| Admin lockout (1, 5, 10, 20, 30, then 60 minutes) | Done |
+| Change the admin code and the PIN (both saved) | Done |
+| Exact-change search, Python graphical front end | Planned extensions |
 
 ---
 
@@ -274,26 +327,31 @@ The remaining 3 checks are marked Superseded (module checks 16 and 29, end-to-en
 
 1. **Assembler:** JWasm is used instead of Visual Studio's `ml.exe`, because the `ml.exe` in Visual Studio 2022 targets 32-bit Windows and cannot produce 16-bit DOS executables.
 2. **Module files:** the code is split into `include` files assembled into one program, so there is one build command and no separate linking step.
-3. **`read_int`:** empty input is invalid, the rest of the line is discarded after a bad character, and the limit is checked after every digit.
+3. **`read_int`:** empty input is invalid; keys are kept in a line buffer (`rbuf`, 16 characters) and checked when Enter is pressed, so Backspace can erase any key; the limit is checked after every digit; `echo_mask` hides the keys for the PIN.
 4. **Payment flow:** insufficient funds returns to the payment prompt with a running total, and `read_payment` returns 0 as the cancel signal, which refunds what was inserted.
 5. **Lookups:** the range check and index calculation live in one shared routine, `code_to_offset`, in their own module.
-6. **Menu:** printed from `product_names` and `product_prices`, so product data is stored in one place only. As a result the names are not column-aligned.
+6. **Menu:** printed from `product_names`, `product_prices` and `product_stock`, so product data is stored in one place only. `print_name_col` and `print_int3` (in `utils.inc`) align the columns in both the customer menu and the admin product list.
 7. **Constants and sizes:** `CR`, `LF`, `MAX_INPUT`, `TEXT_ATTR` and `SCREEN_END` are named; `NUM_PRODUCTS` and `NUM_DENOMS` are computed by the assembler; a build-time check keeps the name and price tables the same length.
 8. **`break_change`:** saves and restores AX, so callers do not lose their value.
 9. **Stock and coins:** one table of units per product (`product_stock`) and one of coins per denomination (`coin_stock`); `break_change` only calculates, and `take_coins`, `take_stock` and `put_coins` change the stock after a sale succeeds, so a refused sale leaves the machine unchanged.
 10. **Payment prompts:** `read_payment` was replaced by the shared `ask_int` (prompt and limit passed in), also used by the admin prompts.
-11. **Admin mode:** entered by typing a secret number (`ADMIN_CODE`) at the product prompt, then a fixed PIN (`ADMIN_PIN`), with a single attempt.
-12. **Save file:** only stock and coins are saved (`VENDING.DAT`), every time the menu is shown; sales totals restart each run. A file of the wrong size or for different table sizes is ignored.
-13. **File names:** test programs are named `t_*.asm`, because DOS allows at most eight characters before the extension.
+11. **Admin mode:** entered by typing the admin code (`admin_code`) at the product prompt, then the PIN (`admin_pin`), which is shown as `*`. `0` goes back, and a wrong PIN re-asks only the PIN. After `PIN_TRIES` (3) wrong PINs the admin is locked for a time that grows (`lock_times`: 1, 5, 10, 20, 30, 60 minutes), measured with the DOS clock; the lock is kept in memory only.
+12. **Save file:** product stock, coin stock, sales count and total, admin code and PIN are saved (`VENDING.DAT`) every time the menu is shown. A file of the wrong size or for different table sizes is ignored.
+13. **Changing the code and PIN:** the new value is typed twice (the PIN as `*`); the admin code must be at least `ADMIN_CODE_MIN` (10) so it never clashes with a product code, and the PIN must be `PIN_MIN` to `PIN_MAX` (1000 to 9999).
+14. **File names:** test programs are named `t_*.asm`, because DOS allows at most eight characters before the extension.
 
 ### 6.2 Known behaviour (not bugs)
 
 - After invalid input at a prompt, only that prompt repeats. The menu is not redrawn until the transaction ends.
-- Backspace is treated as a non-digit, so it makes the entry invalid rather than deleting a character.
 - Each single insertion is limited to 999.
 - The running total cannot overflow 16 bits: a retry only happens while the total is below the price, and each insertion is at most 999.
 - `clear_screen` assumes an 80x25 text screen (the DOS default in DOSBox).
 - Change is made largest coin first from the coins in stock. If that fails, the sale is refused even when another combination of coins could work.
+- A number prompt holds at most 16 typed characters; extra keys are ignored.
+- The sales total is a 16-bit number and wraps after 65535.
+- The admin code and PIN are stored as plain numbers in `VENDING.DAT`.
+- The admin code is shown as typed at the product prompt; only the PIN is hidden.
+- The admin lock is kept in memory only, so restarting the program clears it.
 - The machine saves its state, so stock and coins carry over between runs until `VENDING.DAT` is deleted.
 
 ---

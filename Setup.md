@@ -113,7 +113,7 @@ vending.exe
 - `mount d ...` makes your project folder the drive **D:** inside DOSBox.
 - `d:` switches to that drive, and `dir` lists its files. You should see `VENDING.EXE`.
 - `vending.exe` starts the program. Enter `0` at the menu to exit it.
-- The program creates `VENDING.DAT` in the mounted folder to save its stock and coins. Delete that file to start again with a full machine.
+- The program creates `VENDING.DAT` in the mounted folder to save its stock, coins, sales totals and admin code and PIN. Delete that file to start again with a full machine and the default admin code and PIN.
 - Type `exit` to close DOSBox.
 
 > **Important:** DOSBox reads the folder when you mount it and remembers the listing. If you build a **new** program while DOSBox is open, press **Ctrl+F4** (rescan drives) before running it. Rebuilding a program that already exists does not need this.
@@ -190,4 +190,4 @@ Team rules:
 | `dir` in DOSBox does not show a file you just built | DOSBox cached the folder listing at mount time | Press **Ctrl+F4**, or `exit` and mount again |
 | `mount` reports an error | Wrong path, or a path with spaces without quotes | Check the path exists and put it in quotes |
 | The program behaves like an old version | The `.exe` was not rebuilt after `git pull` or an edit | Run `.\build.bat vending` again |
-| The machine starts with less stock or fewer coins than expected | The previous run saved its state in `VENDING.DAT` | Delete `VENDING.DAT`, or use the admin refill options |
+| The machine starts with less stock or fewer coins than expected, or the admin code or PIN is not the default | The previous run saved its state in `VENDING.DAT` | Delete `VENDING.DAT` (this also restores the default admin code and PIN), or use the admin refill options |

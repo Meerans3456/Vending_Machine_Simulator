@@ -43,8 +43,8 @@ main_loop:
     call save_state        ; keep the save file up to date (after every sale or admin change)
     call clear_screen      ; fresh screen for every transaction
     call display_menu
-    call read_product      ; AX = 0 (exit), ADMIN_CODE (admin mode) or a product in stock
-    cmp ax, ADMIN_CODE
+    call read_product      ; AX = 0 (exit), admin_code (admin mode) or a product in stock
+    cmp ax, word ptr admin_code
     jne main_notadmin
     call admin_mode
     jmp main_loop

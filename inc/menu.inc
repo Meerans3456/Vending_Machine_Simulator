@@ -8,6 +8,7 @@
 ; display_menu: prints the menu. Each product line ("1. Chips - 15") is
 ; built from product_names and product_prices, so the tables are the only
 ; place where product data is stored.
+; The names and prices are padded so every column lines up.
 ; Saves and restores every register it uses.
 display_menu proc
     push ax
@@ -28,11 +29,11 @@ dm_loop:
     mov dx, offset msg_dot
     call print_str          ; ". "
     mov dx, word ptr [product_names + si]
-    call print_str          ; name
+    call print_name_col     ; name, padded to the name column
     mov dx, offset msg_dash
     call print_str          ; " - "
     mov ax, word ptr [product_prices + si]
-    call print_int          ; price
+    call print_int3         ; price, right-aligned
     cmp word ptr [product_stock + si], 0
     jne dm_endline
     mov dx, offset msg_sold_tag
