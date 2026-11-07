@@ -1,8 +1,4 @@
 # Built programs: rebuild with build.bat after cloning or pulling
-/vending.exe
-/t_input.exe
-/t_math.exe
-/t_output.exe
 /*.exe
 
 # Documents kept outside the repository (report and flowcharts)
@@ -16,5 +12,18 @@
 *.tmp
 *.bak
 
-# Save file written by the program (stock and coins)
+# Save files written by the programs (stock, coins, sales, admin settings)
 *.dat
+*.DAT
+
+# Bridge files created each time vending.exe runs in bridge mode (used by the GUI)
+CMD.TXT
+OUT.TXT
+
+# Python
+__pycache__/
+*.pyc
+
+# Output files DOSBox may write when it runs without its console window
+stdout.txt
+stderr.txt

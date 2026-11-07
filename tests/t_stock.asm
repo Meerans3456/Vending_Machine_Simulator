@@ -139,16 +139,17 @@ main proc
     mov dx, offset t_hdr_coin
     call print_str
     call newline
-    call t_show_coins       ; 10 10 10 10 10 (FULL_COINS)
+    call t_show_coins       ; 10 10 10 10 10 10 (FULL_COINS)
     mov word ptr [denom_count + 0], 1
     mov word ptr [denom_count + 2], 0
     mov word ptr [denom_count + 4], 2
     mov word ptr [denom_count + 6], 0
     mov word ptr [denom_count + 8], 3
+    mov word ptr [denom_count + 10], 0
     call take_coins
-    call t_show_coins       ; 9 10 8 10 7
+    call t_show_coins       ; 9 10 8 10 7 10
     call take_coins
-    call t_show_coins       ; 8 10 6 10 4
+    call t_show_coins       ; 8 10 6 10 4 10
 
     ; --- put_coins ---
     call newline
@@ -156,9 +157,9 @@ main proc
     call print_str
     call newline
     mov ax, 35
-    call t_put              ; 35 = 25 + 10         -> 8 11 7 10 4
+    call t_put              ; 35 = 20 + 10 + 5     -> 8 10 7 11 5 10
     mov ax, 64
-    call t_put              ; 64 = 50 + 10 + 4 x 1 -> 9 11 8 10 8
+    call t_put              ; 64 = 50 + 10 + 4 x 1 -> 8 11 7 12 5 14
 
     mov ah, 4Ch
     int 21h

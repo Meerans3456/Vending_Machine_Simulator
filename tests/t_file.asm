@@ -135,7 +135,7 @@ main proc
     call print_str
     call newline
     call load_state
-    call t_show_state       ; products: 3 3 3 3 3 3 / coins: 10 10 10 10 10 / sales: 0 0 / admin: 31415 1234
+    call t_show_state       ; products: 3 3 3 3 3 3 / coins: 10 10 10 10 10 10 / sales: 0 0 / admin: 31415 1234
 
     call newline
     mov dx, offset t_hdr2
@@ -148,12 +148,12 @@ main proc
     mov word ptr sales_total, 65
     mov word ptr admin_code, 12345
     mov word ptr admin_pin, 4321
-    call t_show_state       ; to be saved: 0 2 3 3 3 3 / 7 10 10 10 10 / sales: 4 65 / admin: 12345 4321
+    call t_show_state       ; to be saved: 0 2 3 3 3 3 / 7 10 10 10 10 10 / sales: 4 65 / admin: 12345 4321
     call save_state
     call t_scramble
     call t_show_state       ; scrambled: all 9, sales 9 9, admin 9 9
     call load_state
-    call t_show_state       ; back again: 0 2 3 3 3 3 / 7 10 10 10 10 / sales: 4 65 / admin: 12345 4321
+    call t_show_state       ; back again: 0 2 3 3 3 3 / 7 10 10 10 10 10 / sales: 4 65 / admin: 12345 4321
 
     call newline
     mov dx, offset t_hdr3

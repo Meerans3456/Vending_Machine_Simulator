@@ -14,6 +14,7 @@
 ;   output.inc  print_change, print_receipt, print_summary
 ;   admin.inc   admin_mode (PIN-protected restock and view)
 ;   file.inc    load_state, save_state (stock and coins survive between runs)
+;   bridge.inc  bridge mode (vending.exe /g): commands and replies through CMD.TXT and OUT.TXT
 ; ============================================================
 .model small
 .stack 100h
@@ -28,6 +29,7 @@ include math.inc
 include output.inc
 include admin.inc
 include file.inc
+include bridge.inc
 
 .code
 
@@ -37,7 +39,13 @@ include file.inc
 main proc
     mov ax, @data          ; mandatory: initialize DS
     mov ds, ax
+    call detect_bridge     ; ES is still the program prefix here: looks for /g on the command line
     call load_state        ; carry on with the stock and coins saved by the last run
+    cmp byte ptr bridge_flag, 0
+    je main_loop
+    call bridge_run        ; bridge mode: commands come from CMD.TXT, replies go to OUT.TXT
+    mov ax, 4C00h          ; exit to DOS
+    int 21h
 
 main_loop:
     call save_state        ; keep the save file up to date (after every sale or admin change)

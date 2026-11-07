@@ -2,7 +2,7 @@
 
 This guide takes a new team member from "nothing installed" to "program running" on **Windows**. Allow about 15 minutes.
 
-**Contents:** [1. Tools](#1-tools-you-need) · [2. Get the code](#2-get-the-code) · [3. JWasm](#3-install-jwasm) · [4. DOSBox](#4-install-dosbox) · [5. Build](#5-build-the-program) · [6. Run](#6-run-it-in-dosbox) · [7. Tests](#7-run-the-tests) · [8. Debugging](#8-debugging-optional) · [9. Git workflow](#9-working-with-git) · [10. Troubleshooting](#10-troubleshooting)
+**Contents:** [1. Tools](#1-tools-you-need) · [2. Get the code](#2-get-the-code) · [3. JWasm](#3-install-jwasm) · [4. DOSBox](#4-install-dosbox) · [5. Build](#5-build-the-program) · [6. Run](#6-run-it-in-dosbox) · [7. Tests](#7-run-the-tests) · [8. Python window](#8-the-python-window-gui) · [9. Debugging](#9-debugging-optional) · [10. Git workflow](#10-working-with-git) · [11. Troubleshooting](#11-troubleshooting)
 
 ---
 
@@ -14,6 +14,7 @@ This guide takes a new team member from "nothing installed" to "program running"
 | JWasm v2.11 | the assembler: turns `.asm` source into a DOS `.exe` | yes | github.com/Baron-von-Riedesel/JWasm (see step 3) |
 | DOSBox | runs the 16-bit DOS program | yes | dosbox.com |
 | DOSBox-X | like DOSBox, with a built-in debugger | optional | dosbox-x.com |
+| Python 3 (with tkinter) | the optional window `gui\vending_gui.py` (tested with 3.13) | only for the window | python.org |
 | VS Code | editing the source (any editor works) | optional | code.visualstudio.com |
 
 **You do not need Visual Studio.** Its `ml.exe` assembler produces 32-bit Windows code and cannot build 16-bit DOS programs, which is why this project uses JWasm.
@@ -61,7 +62,7 @@ The project was built and tested with **JWasm v2.11**. Newer 2.x releases should
 
 ## 4. Install DOSBox
 
-Install DOSBox with the default options. If you also want to step through the code, install DOSBox-X as well (see step 8). Both are separate programs from the project; nothing needs configuring.
+Install DOSBox with the default options. If you also want to step through the code, install DOSBox-X as well (see step 9). Both are separate programs from the project; nothing needs configuring.
 
 ---
 
@@ -132,20 +133,42 @@ Press **Ctrl+F4** in DOSBox if it was already open, then run each `.exe` and com
 
 ---
 
-## 8. Debugging (optional)
+## 8. The Python window (GUI)
+
+This step is optional: the program works without it. The window starts DOSBox and `vending.exe` by itself and lets you use the machine with the mouse.
+
+1. **Check Python.** In PowerShell run `py --version` (any recent Python 3; 3.13 was used) and `py -m tkinter`, which should open a small test window. If tkinter is missing, reinstall Python from python.org and keep the *tcl/tk* option ticked.
+2. **Build the program** (`.\build.bat vending`, step 5).
+3. **Start the window** from the project folder:
+
+```powershell
+py gui\vending_gui.py
+```
+
+The window finds DOSBox, deletes any old `CMD.TXT` and `OUT.TXT`, starts DOSBox (minimized) with your project folder mounted as **D:** and runs `vending.exe /g`. The status bar changes to *Connected to vending.exe* and the product cards appear. Closing the window stops the program and DOSBox.
+
+- **If DOSBox is not found,** the display says so. Put the full path of `DOSBox.exe` in `DOSBOX_PATH` in `gui\settings.py`, or set a `DOSBOX_PATH` environment variable. `dosbox-x.exe` is tried as a last resort; DOSBox-X may ask you to confirm something the first time it is started this way.
+- **Manual mode.** `py gui\vending_gui.py --manual` does not start DOSBox. Start `vending.exe /g` in DOSBox yourself first, then run the command.
+- **Settings.** Buttons, colors, fonts, window size and the DOSBox options are in `gui\settings.py`. Edit it, save it and start the window again.
+- **Check the link without the window.** Delete `VENDING.DAT`, start `vending.exe /g` in DOSBox, then run `py gui\test_bridge.py`. It prints a PASS or FAIL line for every command and ends with `QUIT`. Delete `VENDING.DAT` again afterwards, because the test leaves sales in it.
+
+---
+
+## 9. Debugging (optional)
 
 DOSBox-X has a built-in debugger; plain DOSBox usually does not. Build as usual, mount the same folder in DOSBox-X, run the `.exe`, and use DOSBox-X's debugger (see the DOSBox-X documentation for how to open it).
 
 ---
 
-## 9. Working with Git
+## 10. Working with Git
 
-**What is in the repository:** the source (`src\`, `inc\`, `tests\`), `build.bat`, the markdown files, `.gitignore` and `.gitattributes`.
+**What is in the repository:** the source (`src\`, `inc\`, `tests\`, `gui\`), `build.bat`, the markdown files, `.gitignore` and `.gitattributes`.
 
 **What is not** (listed in `.gitignore`):
 
 - built programs: `*.exe` in the project folder;
 - save files: `*.dat` (for example `VENDING.DAT`, written when the program runs);
+- bridge files `CMD.TXT` and `OUT.TXT` (created each time the program runs in bridge mode) and Python's `__pycache__\` folders; add `CMD.TXT`, `OUT.TXT` and `__pycache__/` to `.gitignore`;
 - `docs\` (the project report and flowcharts, which the team keeps outside the repository);
 - assembler leftovers: `*.obj`, `*.o`, `*.map`, `*.lst`, `*.tmp`, `*.bak`.
 
@@ -177,7 +200,7 @@ Team rules:
 
 ---
 
-## 10. Troubleshooting
+## 11. Troubleshooting
 
 | Symptom | Likely cause | Fix |
 |---|---|---|
@@ -191,3 +214,11 @@ Team rules:
 | `mount` reports an error | Wrong path, or a path with spaces without quotes | Check the path exists and put it in quotes |
 | The program behaves like an old version | The `.exe` was not rebuilt after `git pull` or an edit | Run `.\build.bat vending` again |
 | The machine starts with less stock or fewer coins than expected, or the admin code or PIN is not the default | The previous run saved its state in `VENDING.DAT` | Delete `VENDING.DAT` (this also restores the default admin code and PIN), or use the admin refill options |
+| `py` is not recognized | Python is not installed, or without the `py` launcher | Install Python from python.org (keep the *py launcher* option ticked) |
+| `No module named tkinter` | Python was installed without tkinter | Reinstall Python with the *tcl/tk* option |
+| The window says *Waiting for vending.exe /g* and nothing happens | DOSBox did not start the program: `vending.exe` is not built, DOSBox is the wrong one, or its path is wrong | Build `vending.exe`; check `DOSBOX_PATH` in `gui\settings.py`; or use `--manual` to see DOSBox's own messages |
+| The display says *DOSBox.exe was not found* | DOSBox is not in a usual folder or on the `PATH` | Set `DOSBOX_PATH` in `gui\settings.py` |
+| The display says the program has stopped | DOSBox or `vending.exe` ended | Close the window and start it again |
+| `--manual` mode never connects | `vending.exe` was started without `/g` | Run `vending.exe /g` in DOSBox |
+| `test_bridge.py` fails in the admin checks | `VENDING.DAT` from earlier runs holds other stock or a changed code or PIN | Delete `VENDING.DAT`, restart `vending.exe /g` and run it again |
+| `CMD.TXT` and `OUT.TXT` stay in the folder | Normal: they are recreated at every bridge start | Ignore them; they are not committed |

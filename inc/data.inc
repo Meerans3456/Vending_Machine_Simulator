@@ -38,7 +38,7 @@ product_names   dw pname1, pname2, pname3, pname4, pname5, pname6
 .errnz (($ - product_names) / 2) - NUM_PRODUCTS   ; build stops if names and prices differ in number
 
 ; --- Denomination table ---
-denoms          dw 50, 25, 10, 5, 1             ; must stay in descending order
+denoms          dw 100, 50, 20, 10, 5, 1        ; must stay in descending order
 NUM_DENOMS      equ ($ - denoms) / 2
 denom_count     dw NUM_DENOMS dup (0)
 

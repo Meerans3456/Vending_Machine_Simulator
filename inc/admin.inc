@@ -217,10 +217,10 @@ lock_remaining proc
     ret
 lock_remaining endp
 
-; start_lock: starts a lock whose length depends on lock_level (1, 5, 10,
-; 20, 30, then 60 minutes), makes the next lock longer, clears pin_fails
-; and says how long the admin is locked.
-start_lock proc
+; begin_lock: starts a lock whose length depends on lock_level (1, 5, 10,
+; 20, 30, then 60 minutes), makes the next lock longer and clears pin_fails.
+; Prints nothing. Saves and restores every register it uses.
+begin_lock proc
     push ax
     push bx
     push dx
@@ -234,9 +234,21 @@ start_lock proc
     mov word ptr lock_active, 1
     mov word ptr pin_fails, 0
     cmp word ptr lock_level, NUM_LOCKS - 1
-    jae sl_say              ; already at the longest lock time
+    jae bl_done             ; already at the longest lock time
     inc word ptr lock_level
-sl_say:
+bl_done:
+    pop dx
+    pop bx
+    pop ax
+    ret
+begin_lock endp
+
+; start_lock: begin_lock, then says how long the admin is locked.
+start_lock proc
+    push ax
+    push bx
+    push dx
+    call begin_lock
     mov dx, offset msg_locknow
     call print_str
     mov ax, word ptr lock_len

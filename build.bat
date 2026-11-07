@@ -10,8 +10,9 @@ if "%~1"=="" (
 set "SRC="
 if exist "src\%~1.asm" set "SRC=src\%~1.asm"
 if exist "tests\%~1.asm" set "SRC=tests\%~1.asm"
+if exist "gui\%~1.asm" set "SRC=gui\%~1.asm"
 if not defined SRC (
-    echo Cannot find %~1.asm in src\ or tests\
+    echo Cannot find %~1.asm in src\ or tests\ or gui\ - see Setup.md
     exit /b 1
 )
 if not exist "tools\JWasm\JWasm.exe" (

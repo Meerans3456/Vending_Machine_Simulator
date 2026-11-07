@@ -17,8 +17,8 @@ t_hdr3          db '--- 3. after refill_products (coins stay as they were) ---$'
 t_hdr4          db '--- 4. after refill_coins (everything full again) ---$'
 t_hdr5          db '--- 5. set_product_stock: type 2, then 7 ---$'
 t_hdr5v         db '--- after set_product_stock: product 2 should be 7 ---$'
-t_hdr6          db '--- 6. set_coin_count: type 25, then 4 ---$'
-t_hdr6v         db '--- after set_coin_count: the 25-coins should be 4 ---$'
+t_hdr6          db '--- 6. set_coin_count: type 20, then 4 ---$'
+t_hdr6v         db '--- after set_coin_count: the 20-coins should be 4 ---$'
 t_hdr7          db '--- 7. ask_pin (keys show as *): run it three times: 0, then 9999, then 1234 ---$'
 t_pincan        db CR, LF, 'PIN cancelled (0 typed)$'
 t_hdr8          db '--- 8. admin lock logic, with fake clock values (automatic) ---$'
@@ -64,8 +64,8 @@ main proc
 
     mov word ptr [product_stock + 0], 0     ; Chips sold out
     mov word ptr [product_stock + 2], 1     ; one Soda left
-    mov word ptr [coin_stock + 0], 0        ; no 50-coins
-    mov word ptr [coin_stock + 2], 3        ; three 25-coins
+    mov word ptr [coin_stock + 0], 0        ; no 100-coins
+    mov word ptr [coin_stock + 2], 3        ; three 50-coins
     mov dx, offset t_hdr2
     call t_view
 

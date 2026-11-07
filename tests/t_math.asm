@@ -11,7 +11,7 @@ include data.inc
 .data
 t_hdrm          db '--- display_menu (product 3 is sold out) ---$'
 t_hdrcc         db '--- calc_change (payment - price) ---$'
-t_hdrbc         db '--- break_change (counts for 50 25 10 5 1) ---$'
+t_hdrbc         db '--- break_change (counts for 100 50 20 10 5 1) ---$'
 t_cf0           db 'CF=0 change = $'
 t_cf1           db 'CF=1 shortfall = $'
 t_calc          dw 50, 25,  10, 25,  25, 25     ; payment, price pairs
@@ -152,17 +152,17 @@ tk_loop:
     mov dx, offset t_hdrlim
     call print_str
     call newline
-    mov word ptr [coin_stock + 8], 2            ; only two 1-coins left
+    mov word ptr [coin_stock + 10], 2           ; only two 1-coins left
     mov ax, 2
-    call t_break                                ; 0 0 0 0 2
+    call t_break                                ; 0 0 0 0 0 2
     mov ax, 3
     call t_break                                ; no exact change
-    mov word ptr [coin_stock + 8], FULL_COINS  ; 1-coins restored
-    mov word ptr [coin_stock + 2], 0            ; no 25-coins
+    mov word ptr [coin_stock + 10], FULL_COINS ; 1-coins restored
+    mov word ptr [coin_stock + 4], 0            ; no 20-coins
     mov ax, 30
-    call t_break                                ; 0 0 3 0 0 (three 10-coins)
+    call t_break                                ; 0 0 0 3 0 0 (three 10-coins)
     mov ax, 35
-    call t_break                                ; 0 0 3 1 0
+    call t_break                                ; 0 0 0 3 1 0
 
     mov ah, 4Ch
     int 21h

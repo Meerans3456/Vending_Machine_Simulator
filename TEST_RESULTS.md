@@ -1,8 +1,8 @@
 # Vending Machine Simulator: Test Results
 
-**Version tested:** the current program, with the extended features (stock levels, coin inventory, admin mode, save file) and the phase 3 changes (Backspace, aligned menus, saved sales totals, admin lockout, changeable admin code and PIN).
+**Version tested:** the current program, with the extended features (stock levels, coin inventory, admin mode, save file) the phase 3 changes (Backspace, aligned menus, saved sales totals, admin lockout, changeable admin code and PIN) and the phase 4 changes (coins 100, 50, 20, 10, 5, 1, bridge mode and the Python window).
 **Environment:** Windows, JWasm v2.11 (`-0 -mz`), run in DOSBox.
-**How results were obtained:** each check was run by the team in DOSBox and compared with the expected output. "PASS" means the observed output matched the expected output. The checks for the extended features (sections 1.6 and 2.5) and for phase 3 (sections 1.7 and 2.6) were run in the same way and all passed. Checks marked "Superseded" no longer apply because the coin inventory changed the behaviour; they are replaced by the checks named in the table.
+**How results were obtained:** each check was run by the team in DOSBox and compared with the expected output. "PASS" means the observed output matched the expected output. The checks for the extended features (sections 1.6 and 2.5) for phase 3 (sections 1.7 and 2.6) and for phase 4 (sections 1.8, 2.7 and 2.8) were run in the same way and all passed. The Python window (section 2.8) was tried by hand. Checks marked "Superseded" no longer apply because the coin inventory changed the behaviour; they are replaced by the checks named in the table.
 
 Rebuild any program with `.\build.bat <name>`, then run `<name>.exe` in DOSBox.
 
@@ -27,8 +27,10 @@ Rebuild any program with `.\build.bat <name>`, then run `<name>.exe` in DOSBox.
 | `t_stock.exe` | no | It prints four blocks (`lookup_stock`, `take_stock`, `take_coins`, `put_coins`). Compare with section 1.6. |
 | `t_math.exe` | no | It prints the menu (product 3 sold out), then the `calc_change` and `break_change` results, including a block with limited coins (the menu may scroll off the top; scroll up or enlarge the window). Compare with sections 1.4 and 1.6. |
 | `t_output.exe` | no | It prints five change breakdowns, three receipts, then two sales summaries. Compare with sections 1.5 and 1.6. |
-| `t_admin.exe` | yes | Parts 1 to 4 are automatic (press a key after each screen). Part 5: type `2`, then `7`. Part 6: type `25`, then `4`. Part 7 (`ask_pin`, keys shown as `*`) runs once: type `0`, then run it again with `9999`, and again with `1234`. Part 8 is automatic (lock timing with fake clock values). Part 9: type `12345` twice. Part 10: type `4321` twice. Compare with sections 1.6 and 1.7. |
+| `t_admin.exe` | yes | Parts 1 to 4 are automatic (press a key after each screen). Part 5: type `2`, then `7`. Part 6: type `20`, then `4`. Part 7 (`ask_pin`, keys shown as `*`) runs once: type `0`, then run it again with `9999`, and again with `1234`. Part 8 is automatic (lock timing with fake clock values). Part 9: type `12345` twice. Part 10: type `4321` twice. Compare with sections 1.6 and 1.7. |
 | `t_file.exe` | no | It prints three blocks (products, coins, sales and admin values) using its own `T_STATE.DAT`, so your real `VENDING.DAT` is not touched. Compare with sections 1.6 and 1.7. |
+| `gui\test_bridge.py` | no | Delete `VENDING.DAT`, start `vending.exe /g` in DOSBox, then run `py gui\test_bridge.py` from the project folder. It prints a PASS or FAIL line for each of its checks and ends with `QUIT`. Delete `VENDING.DAT` afterwards. Compare with section 1.8. |
+| the Python window | yes | `py gui\vending_gui.py`; follow the scenarios in section 2.8. |
 | `vending.exe` | yes | Follow the scenarios in section 2 (for example code `1`, pay `50`). |
 
 Sections 2.5 and 2.6 need a known starting state: delete `VENDING.DAT` before the first scenario so the machine starts full (3 of each product, 10 of each coin), and use the admin refill options between scenarios when needed.
@@ -41,6 +43,7 @@ Section 3 (design checks) is done by editing `inc\data.inc`, rebuilding `vending
 - *Code refinement:* the menu is printed from the tables, lookups moved into their own module, unused data removed, `break_change` preserves AX, named constants and computed table sizes. All earlier checks were re-run; the checks marked **NEW** were added.
 - *Extended features:* stock levels with sold-out products, coin inventory (change taken from the coins in stock, inserted money added to it), exact-change refusal with refund, sales summary, PIN-protected admin mode, and a save file. `read_payment` was replaced by the shared `ask_int`. The checks in sections 1.6 and 2.5 were added and passed, and three earlier checks were superseded.
 - *Phase 3:* Backspace support in number entry (the line is checked at Enter), aligned customer menu and admin product list, sales totals saved in `VENDING.DAT`, admin PIN hidden with `*`, `0` to go back, wrong PINs re-ask only the PIN, lockout of 1, 5, 10, 20, 30 and then 60 minutes after 3 wrong PINs, and admin menu choices to change the admin code and the PIN (both saved). The checks in sections 1.7 and 2.6 were added and passed.
+- *Phase 4:* the machine's coins are now 100, 50, 20, 10, 5 and 1 (one line in `data.inc`; the change-making, stock, save file and admin code follow the table), bridge mode (`vending.exe /g`, `inc\bridge.inc`) with the `CMD.TXT` / `OUT.TXT` protocol, the Python client and its test (`gui\bridge.py`, `gui\test_bridge.py`), and the tkinter window with its settings file and automatic DOSBox start. The coin values in the earlier checks were updated; the checks in sections 1.8, 2.7 and 2.8 were added and passed.
 
 ---
 
@@ -102,11 +105,11 @@ Each module has its own standalone test program, so a failure points to one modu
 | 22 | `calc_change` | AX = 50, BX = 25 | AX = 25, CF = 0 | PASS |
 | 23 | `calc_change` | AX = 10, BX = 25 | AX = 15, CF = 1 | PASS |
 | 24 | `calc_change` | AX = 25, BX = 25 | AX = 0, CF = 0 (exact payment) | PASS |
-| 25 | `break_change` | AX = 35 | counts 0, 1, 1, 0, 0 | PASS |
+| 25 | `break_change` | AX = 35 | counts 0, 0, 1, 1, 1, 0 (coins 100, 50, 20, 10, 5, 1) | PASS |
 | 26 | `break_change` | AX = 0 | all counts 0 | PASS |
-| 27 | `break_change` | AX = 100 | counts 2, 0, 0, 0, 0 | PASS |
-| 28 | `break_change` | AX = 99 | counts 1, 1, 2, 0, 4 | PASS |
-| 29 | `break_change` | AX = 964 | the machine holds only 10 of each coin; see check 47 | Superseded |
+| 27 | `break_change` | AX = 100 | counts 1, 0, 0, 0, 0, 0 | PASS |
+| 28 | `break_change` | AX = 99 | counts 0, 1, 2, 0, 1, 4 | PASS |
+| 29 | `break_change` | AX = 964 | counts 9, 1, 0, 1, 0, 4 | PASS |
 | 30 | `break_change` | each amount above | AX has the same value after the call | PASS (**NEW**) |
 
 The menu printed at the top of `t_math.exe` is also checked by eye; see end-to-end check 19.
@@ -115,12 +118,12 @@ The menu printed at the top of `t_math.exe` is also checked by eye; see end-to-e
 
 | No. | Routine | Input | Expected | Result |
 |---|---|---|---|---|
-| 31 | `print_change` | change 35, counts 0, 1, 1, 0, 0 | `Change: 35`, `1 x 25`, `1 x 10` | PASS |
+| 31 | `print_change` | change 35, counts 0, 0, 1, 1, 1, 0 | `Change: 35`, `1 x 20`, `1 x 10`, `1 x 5` | PASS |
 | 32 | `print_change` | change 0, all counts 0 | `Change: 0`, no breakdown lines | PASS |
-| 33 | `print_change` | change 99, counts 1, 1, 2, 0, 4 | `Change: 99`, `1 x 50`, `1 x 25`, `2 x 10`, `4 x 1` | PASS |
-| 34 | `print_change` | change 964, counts 19, 0, 1, 0, 4 | `Change: 964`, `19 x 50`, `1 x 10`, `4 x 1` | PASS |
-| 35 | `print_change` | change 1, counts 0, 0, 0, 0, 1 | `Change: 1`, `1 x 1` | PASS |
-| 36 | `print_receipt` | Chips, price 15, paid 50, change 35 | banner, `Item:   Chips`, `Price:  15`, `Paid:   50`, `Change: 35`, `1 x 25`, `1 x 10`, footer | PASS |
+| 33 | `print_change` | change 99, counts 0, 1, 2, 0, 1, 4 | `Change: 99`, `1 x 50`, `2 x 20`, `1 x 5`, `4 x 1` | PASS |
+| 34 | `print_change` | change 964, counts 9, 1, 0, 1, 0, 4 | `Change: 964`, `9 x 100`, `1 x 50`, `1 x 10`, `4 x 1` | PASS |
+| 35 | `print_change` | change 1, counts 0, 0, 0, 0, 0, 1 | `Change: 1`, `1 x 1` | PASS |
+| 36 | `print_receipt` | Chips, price 15, paid 50, change 35 | banner, `Item:   Chips`, `Price:  15`, `Paid:   50`, `Change: 35`, `1 x 20`, `1 x 10`, `1 x 5`, footer | PASS |
 | 37 | `print_receipt` | Soda, price 25, paid 25, change 0 | receipt with `Change: 0` and no breakdown lines | PASS |
 | 38 | `print_receipt` | Juice, price 35, paid 100, change 65 | `Paid:   100`, `Change: 65`, `1 x 50`, `1 x 10`, `1 x 5` (three-digit alignment) | PASS |
 
@@ -133,21 +136,21 @@ The menu printed at the top of `t_math.exe` is also checked by eye; see end-to-e
 | 41 | `read_product` | `31415` | AX = 31415 (the admin code is accepted) | PASS |
 | 42 | `lookup_stock` | AL = 1, 6, 0, 9 | 3, 3, not found, not found | PASS |
 | 43 | `take_stock` | product 2, four times; then code 9 | `ok` three times (2, 1, 0 left); then `refused`, still 0; code 9 refused; product 1 still 3 | PASS |
-| 44 | `take_coins` | coins 10 10 10 10 10; counts 1 0 2 0 3 taken twice | `9 10 8 10 7`, then `8 10 6 10 4` | PASS |
-| 45 | `put_coins` | AX = 35, then 64 | `8 11 7 10 4`, then `9 11 8 10 8` | PASS |
-| 46 | `break_change` (limited coins) | two 1-coins left: AX = 2, then 3; no 25-coins: AX = 30, then 35 | `0 0 0 0 2`; no exact change; `0 0 3 0 0`; `0 0 3 1 0` | PASS |
-| 47 | `break_change` | AX = 964 with 10 of each coin | no exact change | PASS |
+| 44 | `take_coins` | coins 10 10 10 10 10 10; counts 1 0 2 0 3 0 taken twice | `9 10 8 10 7 10`, then `8 10 6 10 4 10` | PASS |
+| 45 | `put_coins` | AX = 35, then 64 | `8 10 7 11 5 10`, then `8 11 7 12 5 14` | PASS |
+| 46 | `break_change` (limited coins) | two 1-coins left: AX = 2, then 3; no 20-coins: AX = 30, then 35 | `0 0 0 0 0 2`; no exact change; `0 0 0 3 0 0`; `0 0 0 3 1 0` | PASS |
+| 47 | `break_change` | AX = 964 with 10 of each coin | counts 9, 1, 0, 1, 0, 4 (the machine holds enough 100-coins) | PASS |
 | 48 | `display_menu` | product 3 sold out | the Candy line ends with `(sold out)`; other lines normal | PASS |
 | 49 | `print_summary` | 3 sales / total 70; then 0 / 0 | shows 3 and 70; then 0 and 0 | PASS |
 | 50 | `admin_view` | starting state | every product 3, every coin 10, sales 0 | PASS |
-| 51 | `admin_view` | Chips 0, Soda 1, 50-coins 0, 25-coins 3 set by hand | the view shows those values | PASS |
+| 51 | `admin_view` | Chips 0, Soda 1, 100-coins 0, 50-coins 3 set by hand | the view shows those values | PASS |
 | 52 | `refill_products` | after check 51 | every product back to 3; coin counts unchanged | PASS |
 | 53 | `refill_coins` | after check 52 | every coin back to 10 | PASS |
 | 54 | `set_product_stock` | `2`, then `7` | product 2 shows 7 | PASS |
-| 55 | `set_coin_count` | `25`, then `4` | the 25-coins show 4 | PASS |
+| 55 | `set_coin_count` | `20`, then `4` | the 20-coins show 4 | PASS |
 | 56 | `ask_pin` | `0`, then `9999`, then `1234` (keys shown as `*`) | `PIN cancelled` for 0, `PIN rejected` for 9999, `PIN accepted` for 1234 | PASS |
-| 57 | `load_state` | no save file | nothing changes: products 3 3 3 3 3 3, coins 10 10 10 10 10, sales 0 0, admin 31415 1234 | PASS |
-| 58 | `save_state`, `load_state` | save `0 2 3 3 3 3 / 7 10 10 10 10 / sales 4 65 / admin 12345 4321`, scramble every value to 9, load | the saved values come back | PASS |
+| 57 | `load_state` | no save file | nothing changes: products 3 3 3 3 3 3, coins 10 10 10 10 10 10, sales 0 0, admin 31415 1234 | PASS |
+| 58 | `save_state`, `load_state` | save `0 2 3 3 3 3 / 7 10 10 10 10 10 / sales 4 65 / admin 12345 4321`, scramble every value to 9, load | the saved values come back | PASS |
 | 59 | `load_state` | a 3-byte file | the file is ignored; the values stay as they were (all 9) | PASS |
 
 ### 1.7 Phase 3 (module level)
@@ -176,6 +179,25 @@ The menu printed at the top of `t_math.exe` is also checked by eye; see end-to-e
 | 79 | `change_admin_code` | `12345` twice | `admin_code` = 12345 | PASS |
 | 80 | `change_admin_pin` | `4321` twice (shown as `*`) | `admin_pin` = 4321 | PASS |
 
+### 1.8 Python bridge (`gui\test_bridge.py`)
+
+The test runs against `vending.exe /g` started with no `VENDING.DAT` (all 10 coins, 3 of each product, default admin code 31415 and PIN 1234) and prints one PASS or FAIL line per check. It ends with `QUIT`.
+
+| Group | What is checked | Checks | Result |
+|---|---|---|---|
+| `STATE` | 6 products (Chips 15 x 3), 6 coins (100, 50, 20, 10, 5, 1) with 10 each, no sales, no lock, no session, no purchase open | 3 | PASS |
+| Purchase with change | `BUY 1` (`OK TX 1 15`), purchase open in `STATE`, `BUY` refused while open (`ERR busy`), `PAY 5` (`OK SHORT 10`), `PAY 50` (`OK SOLD`, `R Chips 15 55 40`, `K 2 20`), then stock, sales (1 of 15) and coins `10 11 8 10 11 10` | 9 | PASS |
+| Exact payment | `BUY 3`, `PAY 10` gives `R Candy 10 10 0` and no `K` line | 2 | PASS |
+| Errors and cancel | `PAY` without a purchase (`ERR notx`), bad `BUY` codes (`ERR invalid`), bad `PAY` amounts (`ERR amount`), `PAY` short then `CANCEL` (`OK REFUND 5`), second `CANCEL` (`OK REFUND 0`), stock unchanged, unknown command (`ERR unknown`) | 15 | PASS |
+| Admin needs a login | `REFILL COINS` and `SETSTOCK` before `LOGIN` give `ERR login`; `LOGIN 31415 1234` gives `OK` and `STATE` shows the session | 4 | PASS |
+| Admin commands | `SETSTOCK` (valid, bad product, `ERR range`), `SETCOIN 20 4`, `SETCOIN 25 1` and `SETCOIN 7 1` (`ERR denom`) | 8 | PASS |
+| No exact change | 20-, 10-, 5- and 1-coins set to 0, then `BUY 3` and `PAY 50` gives `OK NOCHANGE 50`; nothing sold, purchase closed | 7 | PASS |
+| Refills | `REFILL COINS`, `REFILL PRODUCTS` (everything back to 10 and 3), `REFILL XYZ` (`ERR invalid`) | 5 | PASS |
+| Admin code and PIN rules | `SETCODE 5`, `SETPIN 12` and `SETPIN 12345` give `ERR range`; `LOGOUT`; `REFILL COINS` gives `ERR login` again | 5 | PASS |
+| Lockout | `LOGIN 31415 1` (`ERR WRONG 2`), `LOGIN 1 1234` (`ERR WRONG 1`), `LOGIN 31415 3` (`ERR LOCKED 60`), a right login while locked gives `ERR LOCKED` with 1 to 60 seconds, `STATE` shows the lock | 4 | PASS |
+| `QUIT` | `OK`, and `vending.exe` ends | 1 | PASS |
+| **Total** | | **62** | **62 passed** |
+
 ---
 
 ## 2. End-to-end checks (`vending.exe`)
@@ -185,9 +207,9 @@ The menu printed at the top of `t_math.exe` is also checked by eye; see end-to-e
 | No. | Scenario | Input | Expected | Result |
 |---|---|---|---|---|
 | 1 | Exact payment | code 2, pay 25 | receipt with `Change: 0`, no breakdown lines | PASS |
-| 2 | Change due | code 1, pay 50 | `Change: 35`: `1 x 25`, `1 x 10` | PASS |
-| 3 | Large payment | code 1, pay 100 | `Change: 85`: `1 x 50`, `1 x 25`, `1 x 10` | PASS |
-| 4 | Maximum payment | code 6, pay 999 | change 964 needs more coins than the machine holds; see check 29 | Superseded |
+| 2 | Change due | code 1, pay 50 | `Change: 35`: `1 x 20`, `1 x 10`, `1 x 5` | PASS |
+| 3 | Large payment | code 1, pay 100 | `Change: 85`: `1 x 50`, `1 x 20`, `1 x 10`, `1 x 5` | PASS |
+| 4 | Maximum payment | code 6, pay 999 | `Change: 964`: `9 x 100`, `1 x 50`, `1 x 10`, `4 x 1` | PASS |
 | 5 | Multiple purchases | two sales, then 0 | both correct, then exit | PASS |
 
 ### 2.2 Payment flow
@@ -218,7 +240,7 @@ The menu printed at the top of `t_math.exe` is also checked by eye; see end-to-e
 |---|---|---|---|---|
 | 18 | Exit | code 0 | `Thank you. Goodbye.`; return to DOS | PASS |
 | 19 | Startup | run `vending.exe` | the screen clears; the menu appears at the top | PASS |
-| 20 | Sale with receipt and pause | code 1, pay 50 | Chips receipt with `Change: 35`, `1 x 25`, `1 x 10`; `Press any key to continue...`; after a key the screen clears and the menu returns | PASS |
+| 20 | Sale with receipt and pause | code 1, pay 50 | Chips receipt with `Change: 35`, `1 x 20`, `1 x 10`, `1 x 5`; `Press any key to continue...`; after a key the screen clears and the menu returns | PASS |
 | 21 | Exact payment receipt | code 2, pay 25 | the receipt shows `Change: 0` | PASS |
 | 22 | Cancel with pause | code 5, pay 10, then 0 | `Transaction cancelled. Refunded: 10`; pause; cleared menu | PASS |
 | 23 | No clear mid-transaction | code 5, pay 10, then 25 | `Short by: 20` stays on screen; receipt shows `Paid:   35`, `Change: 5`, `1 x 5` | PASS |
@@ -232,9 +254,9 @@ The menu printed at the top of `t_math.exe` is also checked by eye; see end-to-e
 |---|---|---|---|---|
 | 27 | Sold out | code 2, pay 25, three times; then look at the menu; then choose 2 | the menu shows `2. Soda - 25 (sold out)`; choosing 2 gives `Sorry, that product is sold out.` and asks again | PASS |
 | 28 | Exit summary | code 1 pay 50, code 2 pay 25, then 0 | `Sales made: 2`, `Total taken: 40`, `Thank you. Goodbye.` | PASS |
-| 29 | No exact change | code 6, pay 999 | `Sorry, no exact change available.` and `Refunded: 999`; no receipt; the stock of product 6 is unchanged | PASS |
-| 30 | Change coins leave the stock | code 1, pay 50, then admin view | coins `50: 11`, `25: 9`, `10: 9`, `5: 10`, `1: 10` | PASS |
-| 31 | Inserted money joins the coins | code 2, pay 25, then admin view | 25-coins 11 | PASS |
+| 29 | No exact change | admin choice 5: set the 100-coins to 0 (and the 50-coins to 0); then code 6, pay 999 | `Sorry, no exact change available.` and `Refunded: 999`; no receipt; the stock of product 6 is unchanged | PASS |
+| 30 | Change coins leave the stock | code 1, pay 50, then admin view | coins `100: 10`, `50: 11`, `20: 9`, `10: 9`, `5: 9`, `1: 10` | PASS |
+| 31 | Inserted money joins the coins | code 2, pay 25, then admin view | the 20-coins and the 5-coins are each one higher than before the sale (25 is stored as 20 + 5) | PASS |
 | 32 | Wrong PIN | `31415`, then `9999` | `Wrong PIN. Tries left: 2` and the PIN prompt again, not the admin code | PASS |
 | 33 | Admin menu | `31415`, `1234`, choice 1, then 0 | the PIN shows as `*`; the admin menu appears with choices 1 to 7; choice 1 shows stock, coins and sales; 0 returns to the product menu | PASS |
 | 34 | Admin refill and set | sell out a product, then admin choice 2; admin choice 4 with `2`, `7` | the product can be bought again; product 2 shows 7 | PASS |
@@ -261,6 +283,38 @@ The menu printed at the top of `t_math.exe` is also checked by eye; see end-to-e
 | 50 | Change refused | codes and PINs that are too small, or two entries that differ | `The admin code must be at least 10.`, `The PIN must be 1000 to 9999.`, `The two entries do not match. Nothing changed.`; nothing changes | PASS |
 | 51 | Sales kept across runs | sale of code 1 with pay 15, exit, run again, admin view | the sales count and total include the earlier sale | PASS |
 
+### 2.7 Phase 4 (`vending.exe`, keyboard version)
+
+| No. | Scenario | Input | Expected | Result |
+|---|---|---|---|---|
+| 52 | The keyboard version is unchanged | run `vending.exe` without `/g` and repeat checks 2, 3 and 4 of section 2.1 | the same menu and receipts as before, with the 100, 50, 20, 10, 5, 1 coins | PASS |
+| 53 | Six coins in the admin view | admin choice 1 | the coin list shows 100, 50, 20, 10, 5 and 1 | PASS |
+| 54 | Set coins with a new value | admin choice 5: `20`, then `4`; then `25` | `20` is accepted; `25` is not a coin of the machine | PASS |
+
+---
+
+### 2.8 The Python window (`gui\vending_gui.py`, tried by hand)
+
+| No. | Scenario | Action | Expected | Result |
+|---|---|---|---|---|
+| G1 | Start | `py gui\vending_gui.py` | DOSBox starts and minimizes by itself; the status bar says *Connected to vending.exe*; 6 product cards with code, name, price and stock | PASS |
+| G2 | Sale with change | click a product, insert 10, then 5 | `Inserted 10. Insert 5 more.`, then a receipt with the change and its coins, and the stock goes down by one | PASS |
+| G3 | Large payment | click Chips (15), press 100 | change 85 shown as 1 x 50, 1 x 20, 1 x 10, 1 x 5 | PASS |
+| G4 | Money buttons | no product chosen | all money buttons are disabled; they enable when a product is chosen | PASS |
+| G5 | Cancel | choose a product, insert something, press Cancel | `Purchase cancelled. Refunded n.` | PASS |
+| G6 | Sold out | buy the same product until it runs out | its card is grayed out, says SOLD OUT, and cannot be chosen | PASS |
+| G7 | No exact change | admin sets the small coins to 0, then a customer overpays | `Sorry, exact change is not available. Refunded n.`; nothing is sold | PASS |
+| G8 | Admin login | Admin tab | asks for the admin code and the PIN, both shown as `*`; a wrong code or PIN shows the tries left | PASS |
+| G9 | Lockout | three wrong logins | a live countdown replaces the message and Log in is disabled; no empty gap is shown before that | PASS |
+| G10 | Admin tables | log in, use Set and Refill | six coin rows and six product rows update at once | PASS |
+| G11 | Change code and PIN | type two different values, then two equal values | the message names the entry that did not match; the equal values are accepted and work at the next login | PASS |
+| G12 | Open Admin during a purchase | choose a product, insert money, click the Admin tab | the window stays on Customer and the money is refunded | PASS |
+| G13 | Leave the Admin tab | type a code and PIN without logging in, go to Customer and back | the Admin boxes are empty; a logged-in admin is logged out | PASS |
+| G14 | Clean screen | open the Admin tab after a sale | the black display and the receipt are empty; the display says `Choose a product.` again on return | PASS |
+| G15 | Close the window | close it | `vending.exe` and DOSBox both end; no DOSBox is left in Task Manager | PASS |
+| G16 | Manual mode and DOSBox-X | `--manual`; then `DOSBOX_PATH` set to `dosbox-x.exe` | both work (DOSBox-X starts and minimizes) | PASS |
+| G17 | Settings | change `PAY_BUTTONS` in `gui\settings.py`, restart | the buttons change | PASS |
+
 ---
 
 ## 3. Design checks (build-time, NEW)
@@ -279,12 +333,14 @@ These confirm that the product data has a single source of truth.
 
 | Group | Checks | Passed | Failed |
 |---|---|---|---|
-| Module-level checks (section 1, checks 1 to 80) | 80 | 78 | 0 |
-| End-to-end checks (section 2, checks 1 to 51) | 51 | 50 | 0 |
+| Module-level checks (section 1, checks 1 to 80) | 80 | 79 | 0 |
+| Bridge checks (section 1.8, `gui\test_bridge.py`) | 62 | 62 | 0 |
+| End-to-end checks (section 2, checks 1 to 54) | 54 | 54 | 0 |
+| The Python window (section 2.8, checks G1 to G17) | 17 | 17 | 0 |
 | Design checks (section 3) | 3 | 3 | 0 |
-| **Total** | **134** | **131** | **0** |
+| **Total** | **216** | **215** | **0** |
 
-The remaining 3 checks are marked Superseded (module checks 16 and 29, end-to-end check 4); they are replaced by checks 40, 47 and 29 of section 2.5.
+The remaining check is marked Superseded (module check 16, replaced by check 40).
 
 ---
 
@@ -299,7 +355,7 @@ The remaining 3 checks are marked Superseded (module checks 16 and 29, end-to-en
 | Cancel with refund | Done |
 | Sufficiency check with shortfall message | Done |
 | Change calculation (compare before subtracting) | Done |
-| Change breakdown into 50, 25, 10, 5, 1 | Done |
+| Change breakdown into 100, 50, 20, 10, 5, 1 | Done |
 | Receipt with product name | Done |
 | Screen clear and key-press pause | Done |
 | Input validation (letters, empty input, over 999) | Done |
@@ -317,7 +373,9 @@ The remaining 3 checks are marked Superseded (module checks 16 and 29, end-to-en
 | Admin PIN hidden, `0` to go back, wrong PIN re-asks the PIN | Done |
 | Admin lockout (1, 5, 10, 20, 30, then 60 minutes) | Done |
 | Change the admin code and the PIN (both saved) | Done |
-| Exact-change search, Python graphical front end | Planned extensions |
+| Bridge mode (`vending.exe /g`) with the `CMD.TXT` / `OUT.TXT` protocol | Done |
+| Python window: customer and admin tabs, settings file, automatic DOSBox start | Done |
+| Exact-change search | Planned extension |
 
 ---
 
@@ -338,7 +396,11 @@ The remaining 3 checks are marked Superseded (module checks 16 and 29, end-to-en
 11. **Admin mode:** entered by typing the admin code (`admin_code`) at the product prompt, then the PIN (`admin_pin`), which is shown as `*`. `0` goes back, and a wrong PIN re-asks only the PIN. After `PIN_TRIES` (3) wrong PINs the admin is locked for a time that grows (`lock_times`: 1, 5, 10, 20, 30, 60 minutes), measured with the DOS clock; the lock is kept in memory only.
 12. **Save file:** product stock, coin stock, sales count and total, admin code and PIN are saved (`VENDING.DAT`) every time the menu is shown. A file of the wrong size or for different table sizes is ignored.
 13. **Changing the code and PIN:** the new value is typed twice (the PIN as `*`); the admin code must be at least `ADMIN_CODE_MIN` (10) so it never clashes with a product code, and the PIN must be `PIN_MIN` to `PIN_MAX` (1000 to 9999).
-14. **File names:** test programs are named `t_*.asm`, because DOS allows at most eight characters before the extension.
+14. **Coins:** the machine's coins are the `denoms` table (100, 50, 20, 10, 5, 1); every routine reads its size from it, so changing the table changes the whole program. The window's money buttons are separate (`PAY_BUTTONS`), and inserted money is stored as the machine's coins.
+15. **Bridge:** two fixed-size files overwritten in place (64-byte commands, 1024-byte replies) with sequence numbers; a reply is wiped to spaces first and its `#` is written last, so a reply being written is never read as finished.
+16. **Program output as the reply:** in bridge mode the console handle is redirected into `OUT.TXT`, so the existing print routines write the replies.
+17. **Window:** it only sends commands and draws replies; all rules stay in assembly. The admin login needs both the admin code and the PIN. Opening the Admin tab during a purchase cancels it; leaving the tab logs out and empties its boxes.
+18. **File names:** test programs are named `t_*.asm`, because DOS allows at most eight characters before the extension.
 
 ### 6.2 Known behaviour (not bugs)
 
@@ -352,6 +414,10 @@ The remaining 3 checks are marked Superseded (module checks 16 and 29, end-to-en
 - The admin code and PIN are stored as plain numbers in `VENDING.DAT`.
 - The admin code is shown as typed at the product prompt; only the PIN is hidden.
 - The admin lock is kept in memory only, so restarting the program clears it.
+- Bridge mode serves one window at a time, and every reply holds at most 1024 bytes.
+- The bridge login sends the admin code and PIN as plain text in `CMD.TXT`.
+- The window's automatic DOSBox start and minimizing are written for Windows.
+- The product list is fixed when the program is assembled.
 - The machine saves its state, so stock and coins carry over between runs until `VENDING.DAT` is deleted.
 
 ---

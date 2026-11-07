@@ -14,13 +14,13 @@ include data.inc
 t_hdr           db '--- print_change with hardcoded counts ---$'
 t_hdr2          db '--- print_receipt ---$'
 t_hdr3          db '--- print_summary ---$'
-; each case = 6 words: change, count50, count25, count10, count5, count1
-t_cases         dw 35,  0, 1, 1, 0, 0
-                dw 0,   0, 0, 0, 0, 0
-                dw 99,  1, 1, 2, 0, 4
-                dw 964, 19, 0, 1, 0, 4
-                dw 1,   0, 0, 0, 0, 1
-t_casesize      equ 6 * 2               ; bytes per case (6 words)
+; each case = 7 words: change, count100, count50, count20, count10, count5, count1
+t_cases         dw 35,  0, 0, 1, 1, 1, 0
+                dw 0,   0, 0, 0, 0, 0, 0
+                dw 99,  0, 1, 2, 0, 1, 4
+                dw 964, 9, 1, 0, 1, 0, 4
+                dw 1,   0, 0, 0, 0, 0, 1
+t_casesize      equ 7 * 2               ; bytes per case (7 words)
 t_ncases        equ ($ - t_cases) / t_casesize
 
 include utils.inc
@@ -65,16 +65,17 @@ tp_copy:
     call print_str
     call newline
 
-    ; Case 1: Chips, price 15, paid 50, change 35 = 1x25 + 1x10
+    ; Case 1: Chips, price 15, paid 50, change 35 = 1x20 + 1x10 + 1x5
     mov sel_code, 1
     mov price, 15
     mov payment, 50
     mov change, 35
     mov word ptr [denom_count + 0], 0
-    mov word ptr [denom_count + 2], 1
+    mov word ptr [denom_count + 2], 0
     mov word ptr [denom_count + 4], 1
-    mov word ptr [denom_count + 6], 0
-    mov word ptr [denom_count + 8], 0
+    mov word ptr [denom_count + 6], 1
+    mov word ptr [denom_count + 8], 1
+    mov word ptr [denom_count + 10], 0
     call print_receipt
 
     ; Case 2: Soda, price 25, paid 25, change 0 (exact payment)
@@ -87,6 +88,7 @@ tp_copy:
     mov word ptr [denom_count + 4], 0
     mov word ptr [denom_count + 6], 0
     mov word ptr [denom_count + 8], 0
+    mov word ptr [denom_count + 10], 0
     call print_receipt
 
     ; Case 3: Juice, price 35, paid 100, change 65 = 1x50 + 1x10 + 1x5
@@ -94,11 +96,12 @@ tp_copy:
     mov price, 35
     mov payment, 100
     mov change, 65
-    mov word ptr [denom_count + 0], 1
-    mov word ptr [denom_count + 2], 0
-    mov word ptr [denom_count + 4], 1
+    mov word ptr [denom_count + 0], 0
+    mov word ptr [denom_count + 2], 1
+    mov word ptr [denom_count + 4], 0
     mov word ptr [denom_count + 6], 1
-    mov word ptr [denom_count + 8], 0
+    mov word ptr [denom_count + 8], 1
+    mov word ptr [denom_count + 10], 0
     call print_receipt
 
     ; --- print_summary tests (variables set by hand) ---
